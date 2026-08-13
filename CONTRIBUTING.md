@@ -31,18 +31,31 @@ If a reference page converts badly, **fix the converter**, not the output.
 ```bash
 git clone https://github.com/imodoiepale/unleashed-loop.dev-skill
 cd unleashed-loop.dev-skill
-pip install -r tools/requirements.txt
-python tools/ingest_docs.py          # populate references/
+./tools/setup.sh                     # deps + crawl + convert + validate
+pip install pytest                   # for the test suite
 ```
 
 ## Before opening a PR
 
 ```bash
+pytest tests/ -v
 python skills/loop-api/scripts/validate_skill.py
-python -m compileall -q skills tools mcp
+shellcheck -S warning tools/*.sh
 ```
 
-CI runs both, plus a secret scan and installer smoke tests.
+CI runs all three, plus a secret scan and installer smoke tests.
+
+The tests use a synthetic documentation mirror in `tests/fixtures/` rather than
+hitting the live portal, so they run offline and don't hammer Loop's servers. If you
+change the converter, add a fixture page that exercises the case you fixed.
+
+### The secret scan
+
+`evals/evals.json` contains a deliberately realistic fake API key — it tests that the
+skill refuses to execute payments and tells the user to rotate a leaked credential. A
+placeholder wouldn't exercise that behaviour. `.gitleaks.toml` carries a narrow,
+documented path exemption for it. Do not widen that exemption; if your change trips
+the scanner elsewhere, the scanner is probably right.
 
 ## Changing the skill description
 

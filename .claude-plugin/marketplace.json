@@ -1,0 +1,22 @@
+{
+  "name": "unleashed-loop",
+  "owner": {
+    "name": "unleashed-loop.dev-skill contributors",
+    "url": "https://github.com/imodoiepale/unleashed-loop.dev-skill"
+  },
+  "metadata": {
+    "description": "Agent skills for the Loop (NCBA) developer API.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "loop-api",
+      "source": "./",
+      "description": "Expert guide to the Loop (NCBA) developer API — grounded in the real documentation, never guessed. Answers feasibility questions, writes integration code, and debugs failing calls.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "category": "documentation",
+      "keywords": ["loop", "ncba", "kenya", "fintech", "payments", "banking-api"]
+    }
+  ]
+}

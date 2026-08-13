@@ -114,10 +114,12 @@ grep -rhoE "${DOCS_PATH}/[A-Za-z0-9._~/%+-]+" "$OUT/mirror" "$OUT/assets" 2>/dev
   | grep -vE '\.(js|css|png|jpg|jpeg|svg|woff2?|ico|map)$' \
   | sort -u > "$OUT/routes-crawled.txt"
 
-sed "s#^#${BASE}#" "$OUT/routes-sitemap.txt" 2>/dev/null | sed "s#^${BASE}${BASE}#${BASE}#" > "$OUT/_s.txt"
-cat "$OUT/routes-crawled.txt" | sed "s#^#${BASE}#" > "$OUT/_c.txt"
-cat "$OUT/routes-sitemap.txt" "$OUT/_c.txt" 2>/dev/null | grep -E '^https?://' | sort -u > "$OUT/all-urls.txt"
-rm -f "$OUT/_s.txt" "$OUT/_c.txt"
+# Sitemap entries are already absolute URLs; crawled routes are paths needing the
+# host prefix. Merge both into one deduplicated list.
+sed "s#^#${BASE}#" "$OUT/routes-crawled.txt" > "$OUT/_abs.txt"
+cat "$OUT/routes-sitemap.txt" "$OUT/_abs.txt" 2>/dev/null \
+  | grep -E '^https?://' | sort -u > "$OUT/all-urls.txt"
+rm -f "$OUT/_abs.txt"
 echo "    $(wc -l < "$OUT/all-urls.txt") unique documentation URL(s) discovered"
 
 # ---------------------------------------------------------------- spec hunt

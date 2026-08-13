@@ -1,0 +1,33 @@
+# gitleaks configuration
+#
+# The default rules are inherited wholesale — this file only adds a narrow,
+# documented exemption. Weakening secret detection on a banking-adjacent project
+# would be a poor trade, so the allowlist below is scoped as tightly as possible.
+
+[extend]
+useDefault = true
+
+[[rules]]
+# Placeholder rule required so the [[rules.allowlist]] below has a home when
+# extending defaults; matches nothing on its own.
+id = "loop-skill-noop"
+description = "No-op rule; exists only to carry repository allowlists."
+regex = '''\$\^loop-skill-never-matches\$'''
+
+[allowlist]
+description = """
+evals/ contains synthetic credentials on purpose.
+
+evals/evals.json case 3 pastes a realistic-looking API key into the prompt to test
+that the skill (a) refuses to execute a money-moving call, (b) tells the user to
+rotate the key, and (c) does not echo the value back. The fixture has to *look* real
+for that test to mean anything — a value like "YOUR_KEY_HERE" would not exercise the
+behaviour we care about.
+
+These values are invented, have never been valid anywhere, and are confined to this
+directory. The exemption is by path rather than by regex so that no real credential
+elsewhere in the repository can slip through under the same rule.
+"""
+paths = [
+  '''evals/.*\.json''',
+]

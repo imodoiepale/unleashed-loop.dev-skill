@@ -17,11 +17,22 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install test dependencies
+        run: pip install pytest beautifulsoup4 markdownify
+
+      - name: Run pipeline tests
+        run: python -m pytest tests/ -v
+
       - name: Validate skill structure, links, and provenance
         run: python skills/loop-api/scripts/validate_skill.py
 
       - name: Byte-compile all Python
         run: python -m compileall -q skills tools mcp
+
+      - name: Shellcheck the crawl scripts
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          shellcheck -S warning tools/crawl_loop.sh tools/setup.sh
 
       - name: Smoke-test the MCP server
         run: |
@@ -53,3 +64,6 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Inherits gitleaks' default rules and adds one documented path
+          # exemption for the synthetic credentials in evals/. See .gitleaks.toml.
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml

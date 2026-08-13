@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability in this project
+    url: https://github.com/imodoiepale/unleashed-loop.dev-skill/security/advisories/new
+    about: Report privately via a security advisory, not a public issue.
+  - name: Problem with the Loop API itself
+    url: https://loop.co.ke
+    about: This is an unofficial community project. Issues with Loop's platform, your account, or your credentials go to Loop/NCBA directly.

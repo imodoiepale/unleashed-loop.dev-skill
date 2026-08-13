@@ -1,0 +1,43 @@
+name: Bug report
+description: Something in the tooling is broken — crawler, converter, installer, MCP server, or validator.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For "the skill gave me a wrong answer about Loop's API", please use the
+        **Docs drift** template instead — that's a different problem with a different fix.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - tools/crawl_loop.sh (wget snapshot)
+        - tools/ingest_docs.py (HTML/OpenAPI conversion)
+        - tools/setup.sh (one-command setup)
+        - tools/install.py (harness installation)
+        - mcp/loop_docs_server.py (MCP server)
+        - skills/loop-api/scripts/ (search, validate)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: What you ran and what happened
+      description: Exact command and output. Redact any credentials.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "macOS 15, Python 3.12, wget 1.24, Claude Code"

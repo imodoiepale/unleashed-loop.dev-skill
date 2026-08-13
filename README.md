@@ -45,39 +45,42 @@ trust with a payments integration and one you have to double-check anyway.
 ```bash
 git clone https://github.com/imodoiepale/unleashed-loop.dev-skill
 cd unleashed-loop.dev-skill
-pip install -r tools/requirements.txt
 
-# 1. Pull Loop's docs into the skill's reference layer
-python tools/ingest_docs.py                # add --render if the portal renders client-side
+# 1. Build the knowledge base from Loop's docs (one command, ~2 minutes)
+./tools/setup.sh
 
-# 2. Install into your harness (run from your own project directory)
+# 2. Install into your harness — run this from your own project directory
 python /path/to/unleashed-loop.dev-skill/tools/install.py --harness claude
 ```
 
-### Capturing the docs
+Then just ask. The skill triggers on Loop, NCBA Loop, the devportal, and on payment /
+payout / balance / transaction questions even when you don't name an endpoint.
 
-Three routes into `references/`, in descending order of quality:
+> **`references/` ships empty on purpose.** You generate your own snapshot of Loop's
+> documentation rather than trusting one baked in by a stranger — the provenance stays
+> yours, the corpus stays current, and Loop's documentation stays under Loop's terms.
 
-```bash
-# Best — a machine-readable spec is unambiguous about methods and required fields
-python tools/ingest_docs.py --openapi https://.../openapi.json
+### What `setup.sh` does
 
-# Good — headless Chromium, works even when the portal renders client-side
-pip install -r tools/requirements.txt && playwright install chromium
-python tools/ingest_docs.py --render
+It picks the best available capture route and falls back automatically:
 
-# Also fine — wget snapshot, then convert offline
-./tools/crawl_loop.sh
-python tools/ingest_docs.py --input-dir .cache/loop-docs/pages
-```
+| Route | When it's used | Why it's ranked here |
+| --- | --- | --- |
+| OpenAPI / Swagger spec | if the portal exposes one | Unambiguous about methods, required params, and response shapes |
+| `wget` mirror | normal server-rendered docs | Fast, offline-convertible, no browser needed |
+| Headless Chromium | if the portal renders client-side | The only thing that works on a JavaScript app |
 
-`crawl_loop.sh` fences the crawl to `/devportal/docs/loop-api`, harvests routes from
-**JS bundles as well as HTML** (docs portals often define navigation in JavaScript
-where no `<a href>` exists), hunts for an OpenAPI spec, respects `robots.txt`, and
-reports how many captured pages came back nearly empty — the tell-tale sign that the
-portal is client-rendered and `wget` cannot help, in which case it points you at
-`--render`. That last check matters: a `wget` crawl of an SPA "succeeds" loudly while
-capturing nothing but empty shells.
+The crawl is fenced to `/devportal/docs/loop-api`, harvests routes from **JavaScript
+bundles as well as HTML** (docs portals often define navigation in JS where no
+`<a href>` exists), and respects `robots.txt`.
+
+The check that matters most is the empty-shell detector: a `wget` crawl of a
+single-page app prints "saved" for every page while capturing nothing but empty
+`<div id="root">` shells — it *looks* like it worked. `setup.sh` counts real words per
+page and switches to the browser path instead of writing you a hollow corpus.
+
+To refresh later, re-run `./tools/setup.sh` and review the diff. A diff in
+`references/` is a change in Loop's API surface.
 
 Then just ask. The skill triggers on Loop, NCBA Loop, the devportal, and on payment /
 payout / balance / transaction questions even when you don't name an endpoint.
@@ -86,7 +89,7 @@ payout / balance / transaction questions even when you don't name an endpoint.
 
 | Harness | Install | Mechanism |
 | --- | --- | --- |
-| Claude Code | `--harness claude` (add `--global` for all projects) | `.claude/skills/loop-api/` |
+| Claude Code | plugin (below) or `--harness claude` | `.claude/skills/loop-api/` |
 | Codex | `--harness codex` | `AGENTS.md` section |
 | Cursor | `--harness cursor` | `.cursor/rules/loop-api.mdc` |
 | Windsurf | `--harness windsurf` | `.windsurf/rules/loop-api.md` |
@@ -96,6 +99,16 @@ payout / balance / transaction questions even when you don't name an endpoint.
 
 `--harness all` does the lot. Installs are symlinks by default, so `git pull` updates
 every harness at once; pass `--copy` for a frozen snapshot or on Windows.
+
+**Claude Code plugin** — the lowest-friction path, installs the skill and the MCP
+server together:
+
+```
+/plugin marketplace add imodoiepale/unleashed-loop.dev-skill
+/plugin install loop-api
+```
+
+You still need to run `./tools/setup.sh` once to build the corpus.
 
 For harnesses with no skill or rules mechanism, the MCP server exposes the same corpus
 as three tools — `loop_docs_index`, `loop_docs_search`, `loop_docs_get` — with no
@@ -134,10 +147,13 @@ skills/loop-api/
   references/         GENERATED from Loop's docs — every file stamped with source + date
   scripts/            search_docs.py, validate_skill.py
 tools/
-  ingest_docs.py      crawler → references/  (HTTP, headless Chromium, or OpenAPI)
+  setup.sh            one command: crawl → convert → validate
+  crawl_loop.sh       namespace-fenced wget snapshot + JS route harvesting
+  ingest_docs.py      compiler → references/  (HTTP, Chromium, OpenAPI, or mirror)
   install.py          one source of truth → every harness's native format
 mcp/
-  loop_docs_server.py stdio MCP server over the same corpus
+  loop_docs_server.py stdio MCP server over the same corpus (stdlib only)
+tests/                pytest suite over a synthetic docs mirror
 evals/                trigger and task test cases
 ```
 

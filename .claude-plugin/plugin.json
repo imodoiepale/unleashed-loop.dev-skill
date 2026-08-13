@@ -1,0 +1,30 @@
+{
+  "name": "loop-api",
+  "version": "0.1.0",
+  "description": "Expert guide to the Loop (NCBA) developer API — grounded in the real documentation, never guessed. Answers feasibility questions, writes integration code, and debugs failing calls.",
+  "author": {
+    "name": "unleashed-loop.dev-skill contributors",
+    "url": "https://github.com/imodoiepale/unleashed-loop.dev-skill"
+  },
+  "homepage": "https://github.com/imodoiepale/unleashed-loop.dev-skill",
+  "repository": "https://github.com/imodoiepale/unleashed-loop.dev-skill",
+  "license": "MIT",
+  "keywords": [
+    "loop",
+    "ncba",
+    "kenya",
+    "fintech",
+    "payments",
+    "banking-api",
+    "documentation"
+  ],
+  "skills": [
+    "./skills/loop-api"
+  ],
+  "mcpServers": {
+    "loop-docs": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/loop_docs_server.py"]
+    }
+  }
+}
