@@ -18,9 +18,6 @@
     "banking-api",
     "documentation"
   ],
-  "skills": [
-    "./skills/loop-api"
-  ],
   "mcpServers": {
     "loop-docs": {
       "command": "python3",

@@ -16,7 +16,7 @@
       "version": "0.1.0",
       "license": "MIT",
       "category": "documentation",
-      "keywords": ["loop", "ncba", "kenya", "fintech", "payments", "banking-api"]
+      "tags": ["loop", "ncba", "kenya", "fintech", "payments", "banking-api"]
     }
   ]
 }
