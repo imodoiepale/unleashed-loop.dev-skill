@@ -11,7 +11,7 @@
 <br>
 
 [![Licence: MIT](https://img.shields.io/badge/Licence-MIT-2ea44f?style=for-the-badge)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-24%20passing-2ea44f?style=for-the-badge)](tests/test_pipeline.py)
+[![Tests](https://img.shields.io/badge/tests-35%20passing-2ea44f?style=for-the-badge)](tests/test_pipeline.py)
 [![Docs pages](https://img.shields.io/badge/docs%20pages-11%20captured-0969da?style=for-the-badge)](skills/loop-api/references/)
 [![Signing](https://img.shields.io/badge/HMAC%20vectors-4%2F4%20verified-2ea44f?style=for-the-badge)](skills/loop-api/references/signing.md)
 
@@ -465,6 +465,7 @@ not those marks.
 <br>
 
 [![Website](https://img.shields.io/badge/nsait.co.ke-0969da?style=for-the-badge&logo=googlechrome&logoColor=white)](https://nsait.co.ke)
+[![LinkedIn](https://img.shields.io/badge/James%20Epale-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jamesepale/)
 [![TikTok](https://img.shields.io/badge/@b0ijimi-000000?style=for-the-badge&logo=tiktok&logoColor=white)](https://www.tiktok.com/@b0ijimi)
 [![GitHub](https://img.shields.io/badge/imodoiepale-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/imodoiepale)
 [![GitHub](https://img.shields.io/badge/chrisleo16-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/chrisleo-16)

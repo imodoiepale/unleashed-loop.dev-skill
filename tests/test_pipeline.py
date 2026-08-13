@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -396,3 +397,46 @@ def test_mcp_survives_a_corrupt_manifest(tmp_path):
     text = responses[0]["result"]["content"][0]["text"]
     assert "page" in text
     assert not responses[0]["result"].get("isError")
+
+
+# ---------------------------------------------------------------- README claims
+
+def test_readme_badges_match_reality():
+    """The README makes countable claims. A stale badge is a small lie, and this
+    project's whole pitch is that its claims are checkable — so check them."""
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+
+    declared = int(re.search(r"badge/tests-(\d+)%20passing", readme).group(1))
+    actual = len([
+        line for line in (REPO / "tests" / "test_pipeline.py").read_text().splitlines()
+        if line.startswith("def test_")
+    ])
+    # parametrised cases expand at runtime, so the badge counts at least the functions
+    assert declared >= actual, f"README claims {declared} tests but {actual} functions exist"
+
+    manifest = json.loads(
+        (REPO / "skills" / "loop-api" / "references" / "manifest.json").read_text()
+    )
+    pages_claim = int(re.search(r"badge/docs%20pages-(\d+)%20captured", readme).group(1))
+    assert pages_claim <= manifest["page_count"], (
+        f"README claims {pages_claim} captured pages but the manifest lists "
+        f"{manifest['page_count']} entries"
+    )
+
+
+def test_readme_has_no_broken_local_links():
+    """Every relative link and image in the README must resolve, ignoring commented-out
+    blocks (logo slots are parked there until a file is committed)."""
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+    active = re.sub(r"<!--.*?-->", "", readme, flags=re.S)
+
+    targets = [
+        t for t in re.findall(r"\]\(([^)#]+?)(?:#[^)]*)?\)", active)
+        if not t.startswith(("http://", "https://", "mailto:"))
+    ]
+    targets += [
+        s for s in re.findall(r'<img[^>]+src="([^"]+)"', active)
+        if not s.startswith(("http://", "https://", "data:"))
+    ]
+    missing = [t for t in targets if not (REPO / t).exists()]
+    assert not missing, f"README links to missing files: {missing}"
