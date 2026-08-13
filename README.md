@@ -1,5 +1,9 @@
 <div align="center">
 
+<a href="https://nsait.co.ke">
+  <img src="https://nsait.co.ke/col-bal/uploads/2025/07/logo-4.png" alt="NSAIT — Nairobi Space of AI Tools" height="80">
+</a>
+
 # 🇰🇪 LOOP API Skill
 
 ### Ask your AI coding assistant about the LOOP API — and get real answers, not invented ones.
@@ -389,11 +393,11 @@ not those marks.
 
 <div align="center">
 
-<!-- NSAIT logo — uncomment once assets/nsait-logo.png is committed. See assets/README.md.
-<img src="assets/nsait-logo.png" alt="NSAIT" height="56">
--->
+<a href="https://nsait.co.ke">
+  <img src="https://nsait.co.ke/col-bal/uploads/2025/07/logo-4.png" alt="NSAIT — Nairobi Space of AI Tools" height="72">
+</a>
 
-### 🛠️ Created by [**NSAIT.CO.KE**](https://nsait.co.ke)
+### Created by [**NSAIT.CO.KE**](https://nsait.co.ke)
 
 #### Nairobi Space of AI Tools
 

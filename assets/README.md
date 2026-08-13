@@ -17,12 +17,34 @@ everything else.
 
 | File | Purpose | Notes |
 | --- | --- | --- |
-| `nsait-logo.png` | NSAIT's mark, in the README footer beside the credit | Your own brand — use it wherever you like. Transparent background, ~400px wide renders crisply at 56px on high-DPI screens. |
+| `nsait-logo.png` | **Optional.** A local copy of the NSAIT mark. | The README currently loads it from `https://nsait.co.ke/col-bal/uploads/2025/07/logo-4.png`. That is fine — it is a stable path on NSAIT's own server, and GitHub caches it through `camo.githubusercontent.com`. Committing a copy only matters if that URL ever moves. |
 | `loop-logo.png` | LOOP's mark, small and inline in "What's in the box" | Source from LOOP's own site or press kit, **not** a search-result thumbnail. ~200px wide is plenty for a 28px render. |
 
-Both are wired up already but **commented out**, so nothing renders as a broken image
-while the files are missing. Once a file is here, open `README.md`, search for its
-filename, and delete the `<!--` and `-->` around that block.
+The LOOP slot is wired up but **commented out**, so it does not render as a broken
+image while the file is missing. Once the file is here, open `README.md`, search for
+`loop-logo.png`, and delete the `<!--` and `-->` around that block.
+
+## Sizing
+
+The README sets **`height` only** and lets the browser scale width to match. That
+preserves the aspect ratio whatever the source dimensions are, so a logo never comes
+out stretched. Do not add a `width` alongside it.
+
+Current heights: **80px** in the header, **72px** in the footer.
+
+## Dark mode
+
+GitHub renders READMEs in both light and dark themes. A logo with dark text on a
+transparent background disappears against a dark backdrop.
+
+If that happens, add a light variant and swap on theme:
+
+```html
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/nsait-logo-light.png">
+  <img src="assets/nsait-logo.png" alt="NSAIT" height="80">
+</picture>
+```
 
 ### Adding them
 
