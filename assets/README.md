@@ -59,19 +59,14 @@ Check both themes. If one disappears, add a light variant and swap on theme:
 
 ## Icons
 
-`linkedin.svg` is the LinkedIn glyph from **[Simple Icons](https://simpleicons.org)**,
-which releases its icon set under **CC0 1.0** (public domain). It is committed here and
-referenced by relative path rather than hot-linked from a CDN — GitHub's image proxy
-rasterises externally-hosted SVGs (which looked broken), whereas a self-hosted SVG
-renders as crisp vector.
+Social links in the README footer use **[shields.io](https://shields.io)** badges,
+which render their glyphs from **[Simple Icons](https://simpleicons.org)** (CC0) via the
+`logo=` parameter — e.g. `logo=linkedin`. That needs no committed files.
 
-Note: inline `<svg>` markup does **not** work in a GitHub README — the Markdown
-sanitiser strips `<svg>` tags. Committing the file and referencing it with `<img>` is
-the way to use an SVG icon here.
-
-To add another brand icon, download its SVG from Simple Icons into this folder and
-reference it the same way. The LinkedIn wordmark and logo remain trademarks of LinkedIn
-Corporation; the icon is used nominatively, to link to profiles.
+If you ever want a self-hosted icon instead: commit the SVG here and reference it by
+relative path with `<img src="assets/name.svg">`. Do **not** hot-link an SVG from an
+external CDN — GitHub's image proxy rasterises those and they look broken — and note
+that inline `<svg>` markup is stripped by the README sanitiser.
 
 ## Trademark
 
