@@ -70,6 +70,7 @@ Being straight with you, because a tool that oversells itself wastes your time.
 <tr valign="top"><td>
 
 - Answers **"is this possible with LOOP?"** from the real docs
+- **Walks you through authorisation** — how to get a token, why it expires, why a stale one looks like a signing bug
 - Tells you **which endpoint** to call, and in what order
 - Gives you **request bodies with correct field names**
 - Explains **what an error code actually means**
@@ -79,7 +80,7 @@ Being straight with you, because a tool that oversells itself wastes your time.
 
 </td><td>
 
-- **Does not touch your API keys.** No tokens, no credentials, no login.
+- **Does not hold your API keys.** It explains *how* to authenticate; it never stores, reads, or transmits a credential of yours.
 - **Does not call the LOOP API.** It reads documentation. It cannot move money.
 - **Does not test your integration.** It cannot tell you if your code works — only whether it matches the docs.
 - **Is not official.** Not built or endorsed by LOOP or NCBA.
@@ -90,10 +91,14 @@ Being straight with you, because a tool that oversells itself wastes your time.
 </table>
 
 > [!IMPORTANT]
-> **No credentials, ever.** There is no code in this repository that sends a request to
-> LOOP, reads an API key, or handles a token. The only thing that touches the network is
-> the documentation downloader — and only to fetch public doc pages. Your keys stay
-> yours.
+> **It teaches auth. It never handles your credentials.**
+> The skill fully documents LOOP's OAuth 2.0 flow — see
+> [`authorisation.md`](skills/loop-api/references/authorisation.md) — so it can tell you
+> exactly how to get a token and why yours is being rejected.
+>
+> What it will not do is hold one. No code in this repository sends a request to LOOP,
+> reads an API key, or stores a token. The only thing touching the network is the
+> documentation downloader, and only to fetch public doc pages. Your keys stay yours.
 
 ---
 
@@ -113,6 +118,7 @@ no API key, no account.
 Then just ask, in plain English:
 
 <table>
+<tr><td>💬</td><td><i>"How do I get an access token for the LOOP sandbox?"</i></td></tr>
 <tr><td>💬</td><td><i>"How do I collect a payment from a customer with LOOP?"</i></td></tr>
 <tr><td>💬</td><td><i>"Why does my request return 401 when my signature looks right?"</i></td></tr>
 <tr><td>💬</td><td><i>"What's the difference between Pay to Till and Send Money?"</i></td></tr>
@@ -215,6 +221,31 @@ they're the reason this beats reading the portal yourself:
 | 🕳️ **[`coverage.md`](skills/loop-api/references/coverage.md)** | What's missing, so the assistant says *"not captured"* instead of *"doesn't exist"*. |
 
 ### The 9 endpoints, and when to use each
+
+**Step 0 — authorise. Nothing else works until this does.** 🔑
+
+| You want to… | Use |
+| :--- | :--- |
+| Get the Bearer token every other call needs | [**Authorisation**](skills/loop-api/references/authorisation.md) |
+
+<table><tr valign="top"><td width="30">🔑</td><td>
+
+Every LOOP call carries `Authorization: Bearer <token>`. You get that token with
+**OAuth 2.0 client credentials**: base64 your Consumer Key and Secret, send them as
+`Basic <encoded>` with `grant_type=client_credentials` form-encoded. Tokens are
+short-lived — **minutes, not hours**.
+
+Sandbox keys are issued **instantly**. Production keys need **approval**, which is a
+lead time, not a code problem — and it's usually the real answer to *"why can't I go
+live yet?"*
+
+Two traps live here, both documented:
+**(a)** an expired token is rejected *before* your signature is checked, so a stale
+token looks exactly like a signing bug;
+**(b)** the Authorisation page's own "Request Examples" block **cannot work** — it asks
+for a token while presenting one. Use the Basic-auth form.
+
+</td></tr></table>
 
 **Getting paid** 📥
 
