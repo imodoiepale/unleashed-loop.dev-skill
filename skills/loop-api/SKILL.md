@@ -145,6 +145,23 @@ rather than a yes/no reflex.
 Match the developer's existing stack and conventions. If their codebase uses `axios`
 and repository classes, don't hand them a `curl` command and a global function.
 
+## Workflow: hardening and security testing
+
+When a developer asks about security, fraud, replay, idempotency, penetration testing,
+or "how do I make this safe", read `references/security-testing.md` and work from it.
+
+- **Keep it defensive and authorised.** Help them test *their own* integration, with
+  *their own* credentials, in the *sandbox* — replay resistance, double-spend, token
+  hygiene, fail-closed behaviour. Do **not** help probe Loop's production systems, other
+  people's tills, or anything whose purpose is unauthorised access. If a request points
+  that way, say so plainly and redirect to authorised sandbox self-testing.
+- **Fraud detection is something they build on top.** Loop documents no risk-scoring or
+  fraud API (`references/coverage.md`). If they want one, help them design a
+  fail-closed risk layer — hold the payout when a check is uncertain, never release it —
+  but do not imply Loop provides fraud primitives it does not.
+- The single most valuable test is idempotency: a retry with the same `txnReference`
+  must not pay twice. Lead with it.
+
 ## Workflow: debugging a failing call
 
 Work down this list — in practice the cause is usually near the top:

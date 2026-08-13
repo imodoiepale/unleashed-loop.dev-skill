@@ -26,6 +26,7 @@ Transcribed from <https://sandbox.loop.co.ke/devportal/docs/loop-api/> on 2026-0
 | [`signing.md`](./signing.md) | The HMAC-SHA256 scheme every payment endpoint shares, with verified test vectors. |
 | [`doc-conflicts.md`](./doc-conflicts.md) | 15 contradictions inside LOOP's own docs. Check here before telling a developer their code is wrong. |
 | [`coverage.md`](./coverage.md) | What this corpus does **not** contain. Check before saying "LOOP doesn't support that". |
+| [`security-testing.md`](./security-testing.md) | Hardening your integration: the security controls LOOP documents, each as a self-test you run in the sandbox — replay, idempotency/double-spend, token hygiene, fail-closed behaviour — plus where a fraud/risk layer would live. |
 
 ## Getting started
 

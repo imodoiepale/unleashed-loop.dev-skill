@@ -6,9 +6,10 @@
   "verified": [
     "All four published HMAC-SHA256 test vectors were recomputed and reproduce exactly, confirming the canonical string is merchantTill|timestamp|nonce with lowercase-hex output."
   ],
-  "page_count": 16,
+  "page_count": 17,
   "pages": [
     { "slug": "api-flows", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/", "title": "What the APIs actually do — flow by flow" },
+    { "slug": "security-testing", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/", "title": "Security self-testing in the LOOP sandbox" },
     { "slug": "introduction", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/introduction", "title": "Introduction" },
     { "slug": "overview", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/overview", "title": "LOOP API Overview" },
     { "slug": "authorisation", "url": "https://sandbox.loop.co.ke/devportal/docs/loop-api/authorisation", "title": "Authorisation" },
