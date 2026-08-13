@@ -178,6 +178,15 @@ Not at the top level. This is a documented cause of a `400` with an unhelpful me
 
 ## 📚 What's in the box
 
+<!-- LOOP mark — uncomment once assets/loop-logo.png is committed. See assets/README.md.
+     Deliberately small and inline: a vendor logo in the header would read as official
+     endorsement, which the licence section below explicitly disclaims.
+<p><img src="assets/loop-logo.png" alt="LOOP" height="28" align="left" hspace="10">
+Documentation captured from LOOP's developer portal. LOOP is a trademark of its owner;
+this project is unofficial.</p>
+-->
+
+
 <div align="center">
 
 ```mermaid
@@ -339,6 +348,11 @@ This is a **community project**. It is not published, reviewed, or endorsed by L
 NCBA. The references are a snapshot of public documentation, not a contract. When
 correctness genuinely matters — settlement, fees, limits, compliance — **confirm with
 LOOP directly** at `apisupport@loop.co.ke`.
+
+**Trademarks.** LOOP, NCBA and their logos belong to their respective owners. They are
+used here only to identify which API this skill documents — nominative use, not a claim
+of affiliation or approval. The MIT licence covers this project's own code and writing,
+not those marks.
 
 <br>
 
