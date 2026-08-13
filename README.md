@@ -76,11 +76,31 @@ bundles as well as HTML** (docs portals often define navigation in JS where no
 
 The check that matters most is the empty-shell detector: a `wget` crawl of a
 single-page app prints "saved" for every page while capturing nothing but empty
-`<div id="root">` shells — it *looks* like it worked. `setup.sh` counts real words per
-page and switches to the browser path instead of writing you a hollow corpus.
+`<div id="root">` shells — it *looks* like it worked. The detector is structural
+rather than length-based: a page counts as a shell only when it is both short **and**
+contains no prose elements at all. Loop's portal publishes "documentation coming soon"
+stubs, and a word-count threshold would fail those and send you to the browser path
+for nothing.
 
 To refresh later, re-run `./tools/setup.sh` and review the diff. A diff in
 `references/` is a change in Loop's API surface.
+
+### Using the crawler on another docs site
+
+Nothing in the capture pipeline is Loop-specific beyond its defaults, so the same
+tooling will snapshot any documentation portal:
+
+```bash
+BASE=https://docs.example.com \
+DOCS_PATH=/api \
+START_PAGE=/api/introduction \
+./tools/crawl_loop.sh .cache/example-docs
+
+python tools/ingest_docs.py --input-dir .cache/example-docs/pages --out my-references
+```
+
+`DOCS_PATH` is the fence — the crawl will not leave it, which is what keeps you out of
+the site's login flow and the rest of its domain.
 
 Then just ask. The skill triggers on Loop, NCBA Loop, the devportal, and on payment /
 payout / balance / transaction questions even when you don't name an endpoint.

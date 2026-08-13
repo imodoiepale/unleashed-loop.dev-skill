@@ -128,6 +128,36 @@ def test_shell_page_reported_on_stderr(tmp_path):
     assert "--render" in result.stderr
 
 
+def _crawler_is_shell(html: str, tmp_path: Path, name: str) -> bool:
+    """Invoke the crawler's own is_shell() against a file, in isolation."""
+    page = tmp_path / name
+    page.write_text(html)
+    snippet = subprocess.run(
+        ["sed", "-n", "/^is_shell()/,/^}/p", str(REPO / "tools" / "crawl_loop.sh")],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    return subprocess.run(
+        ["bash", "-c", f"{snippet}\nis_shell {page}"], capture_output=True
+    ).returncode == 0
+
+
+def test_crawler_shell_check_spares_short_placeholder_pages(tmp_path):
+    """The crawler must not mistake a genuinely short page for an unrendered shell.
+
+    Loop's portal publishes 'documentation coming soon' stubs. Judging shells on
+    word count alone failed those, which wrongly told the user their whole crawl
+    was empty and sent them to the headless path for no reason.
+    """
+    assert _crawler_is_shell('<div id="root"></div>', tmp_path, "shell.html")
+    assert not _crawler_is_shell(
+        "<h1>Pay to M-Pesa Till</h1><p>Detailed documentation coming soon.</p>",
+        tmp_path, "stub.html",
+    )
+    assert not _crawler_is_shell(
+        "<h1>Overview</h1>" + "<p>word</p>" * 50, tmp_path, "full.html"
+    )
+
+
 # ---------------------------------------------------------------- validator
 
 def _validate(env_dir: Path | None = None) -> subprocess.CompletedProcess:

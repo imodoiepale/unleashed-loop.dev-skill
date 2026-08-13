@@ -19,16 +19,38 @@
 
 set -uo pipefail
 
-BASE="https://sandbox.loop.co.ke"
-DOCS_PATH="/devportal/docs/loop-api"
-START="${BASE}${DOCS_PATH}/introduction"
+# Defaults target Loop's sandbox portal. Override to snapshot any other docs site:
+#   BASE=https://docs.example.com DOCS_PATH=/api START_PAGE=/api/intro ./tools/crawl_loop.sh
+BASE="${BASE:-https://sandbox.loop.co.ke}"
+DOCS_PATH="${DOCS_PATH:-/devportal/docs/loop-api}"
+START="${BASE}${START_PAGE:-${DOCS_PATH}/introduction}"
 OUT="${1:-.cache/loop-docs}"
+
+# wget's --accept-regex needs the host escaped, and the host is now user-supplied.
+HOST="${BASE#*://}"; HOST="${HOST%%/*}"
+HOST_RE=$(printf '%s' "$HOST" | sed 's/\./\\./g')
 UA="unleashed-loop.dev-skill/0.1 (docs snapshot; +https://github.com/imodoiepale/unleashed-loop.dev-skill)"
 
 mkdir -p "$OUT"/{mirror,pages,assets,spec}
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[33m!!  %s\033[0m\n' "$*" >&2; }
+
+# Is this file an unrendered SPA shell rather than a real page?
+#
+# Word count alone is not enough. A legitimate "documentation coming soon" stub is
+# genuinely short, and failing it as a shell would wrongly push you to the headless
+# crawler. The distinguishing feature of a real shell is *structural*: the server
+# sent a mount point and nothing else — no prose elements at all. So we require
+# both thin text and an absence of paragraph/heading/list content.
+is_shell() {
+  local f="$1"
+  local words
+  words=$(sed 's/<[^>]*>/ /g' "$f" | wc -w | tr -d ' ')
+  [ "$words" -ge 60 ] && return 1
+  grep -qiE '<(p|h1|h2|h3|li|td|pre)[ >]' "$f" && return 1
+  return 0
+}
 
 # ---------------------------------------------------------------- preflight
 say "[0/6] Preflight"
@@ -48,10 +70,13 @@ if [ "$code" != "200" ]; then
   warn "Start URL did not return 200. The docs may require a login, or the path moved."
 fi
 
+# Match robots.txt against the top segment of the docs path (/devportal for Loop),
+# since that is the granularity most sites write their rules at.
+TOP_SEGMENT="/$(printf '%s' "${DOCS_PATH#/}" | cut -d/ -f1)"
 curl -s -A "$UA" "$BASE/robots.txt" -o "$OUT/robots.txt" 2>/dev/null
-if [ -s "$OUT/robots.txt" ] && grep -qi "^Disallow: */devportal" "$OUT/robots.txt"; then
-  warn "robots.txt disallows /devportal. Not crawling."
-  warn "Loop publish these docs publicly, so this is most likely a blanket rule —"
+if [ -s "$OUT/robots.txt" ] && grep -qi "^Disallow: *${TOP_SEGMENT}" "$OUT/robots.txt"; then
+  warn "robots.txt disallows ${TOP_SEGMENT}. Not crawling."
+  warn "These docs are published publicly, so this is most likely a blanket rule —"
   warn "but the call to proceed anyway is yours. Review $OUT/robots.txt, and if you"
   warn "decide to continue, re-run with: CRAWL_IGNORE_ROBOTS=1 $0"
   [ "${CRAWL_IGNORE_ROBOTS:-0}" = "1" ] || exit 2
@@ -66,10 +91,10 @@ curl -s -A "$UA" "$START" -o "$OUT/_probe.html"
 words=$(sed 's/<[^>]*>/ /g' "$OUT/_probe.html" | wc -w | tr -d ' ')
 echo "    start page contains ~$words words of text outside markup"
 SPA=0
-if [ "$words" -lt 120 ]; then
+if is_shell "$OUT/_probe.html"; then
   SPA=1
-  warn "This looks client-rendered — wget will capture an empty shell."
-  warn "Finish with the headless-browser path instead (step 6 explains)."
+  warn "This looks client-rendered — the server returned a mount point with no prose."
+  warn "wget will capture empty shells. Use the headless path instead (step 6 explains)."
 fi
 
 # ---------------------------------------------------------------- sitemap
@@ -89,8 +114,8 @@ done
 say "[2/6] Mirroring $DOCS_PATH"
 wget "${ROBOTS_FLAG[@]}" \
   --mirror --level=inf --adjust-extension --convert-links --page-requisites \
-  --domains=sandbox.loop.co.ke \
-  --accept-regex="^https://sandbox\.loop\.co\.ke${DOCS_PATH}(/.*)?$" \
+  --domains="$HOST" \
+  --accept-regex="^https?://${HOST_RE}${DOCS_PATH}(/.*)?$" \
   --reject-regex='(logout|signout|login|signin)' \
   --wait=1 --random-wait --tries=3 --timeout=30 \
   --user-agent="$UA" \
@@ -102,7 +127,7 @@ wget "${ROBOTS_FLAG[@]}" \
 say "[3/6] Fetching app assets (for route discovery)"
 wget "${ROBOTS_FLAG[@]}" \
   --page-requisites --adjust-extension --span-hosts \
-  --domains=sandbox.loop.co.ke \
+  --domains="$HOST" \
   --tries=3 --timeout=30 --user-agent="$UA" \
   --directory-prefix="$OUT/assets" \
   "$START" 2>&1 | grep -Ei 'saved|ERROR' | tail -10
@@ -167,8 +192,7 @@ fi
 thin=0; total=0
 while IFS= read -r -d '' f; do
   total=$((total+1))
-  w=$(sed 's/<[^>]*>/ /g' "$f" | wc -w | tr -d ' ')
-  [ "$w" -lt 120 ] && thin=$((thin+1))
+  is_shell "$f" && thin=$((thin+1))
 done < <(find "$OUT/pages" "$OUT/mirror" -name '*.html' -print0 2>/dev/null)
 
 say "Result"
