@@ -1,12 +1,12 @@
 <div align="center">
 
-<a href="https://nsait.co.ke">
-  <img src="https://nsait.co.ke/col-bal/uploads/2025/07/logo-4.png" alt="NSAIT — Nairobi Space of AI Tools" height="80">
-</a>
+<img src="https://loop.co.ke/wp-content/uploads/2025/10/loop-dfs-logo.png" alt="LOOP" height="80">
 
 # 🇰🇪 LOOP API Skill
 
 ### Ask your AI coding assistant about the LOOP API — and get real answers, not invented ones.
+
+<sub><i>An unofficial, community-built developer tool. Not affiliated with, endorsed by, or supported by LOOP or NCBA.</i></sub>
 
 <br>
 
@@ -187,14 +187,6 @@ Not at the top level. This is a documented cause of a `400` with an unhelpful me
 ---
 
 ## 📚 What's in the box
-
-<!-- LOOP mark — uncomment once assets/loop-logo.png is committed. See assets/README.md.
-     Deliberately small and inline: a vendor logo in the header would read as official
-     endorsement, which the licence section below explicitly disclaims.
-<p><img src="assets/loop-logo.png" alt="LOOP" height="28" align="left" hspace="10">
-Documentation captured from LOOP's developer portal. LOOP is a trademark of its owner;
-this project is unofficial.</p>
--->
 
 
 <div align="center">
