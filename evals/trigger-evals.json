@@ -1,0 +1,18 @@
+[
+  {"query": "im building a checkout for my duka in nairobi and i need to accept payments straight into our NCBA Loop business account. whats the api call for that?", "should_trigger": true},
+  {"query": "getting a 401 back from sandbox.loop.co.ke every single time even though i just regenerated the api key from the devportal. what am i doing wrong", "should_trigger": true},
+  {"query": "we pay about 40 casuals every friday. is it possible to push all of those in one request from loop or do i have to loop through them one by one", "should_trigger": true},
+  {"query": "whats the difference between the sandbox and live base urls for loop, and do i need separate credentials for each", "should_trigger": true},
+  {"query": "need to reconcile yesterday's settlements against our ledger — can I pull a transaction list by date range from the bank api we're on (loop)", "should_trigger": true},
+  {"query": "can you write me a node service that checks our account balance every morning at 8 and posts it to slack? we bank with loop", "should_trigger": true},
+  {"query": "the devportal docs mention a callback url but i cant tell what payload it actually posts to me. help", "should_trigger": true},
+  {"query": "my finance lead is asking whether we can do standing orders programmatically or if thats a manual thing at the branch", "should_trigger": true},
+  {"query": "integrate mpesa daraja stk push into our django checkout, sandbox creds are in .env already", "should_trigger": false},
+  {"query": "write a python for loop that retries an http request 3 times with exponential backoff", "should_trigger": false},
+  {"query": "we're on stripe and i need to set up a webhook endpoint for payment_intent.succeeded in express", "should_trigger": false},
+  {"query": "explain what a 401 vs 403 means in http, im always mixing them up", "should_trigger": false},
+  {"query": "can you help me design the db schema for a payments ledger, double entry, postgres", "should_trigger": false},
+  {"query": "our react app has an infinite render loop in a useEffect, can you spot it", "should_trigger": false},
+  {"query": "what are the cbk regulations around holding customer funds as a fintech in kenya", "should_trigger": false},
+  {"query": "set up oauth2 client credentials flow against our internal keycloak instance", "should_trigger": false}
+]

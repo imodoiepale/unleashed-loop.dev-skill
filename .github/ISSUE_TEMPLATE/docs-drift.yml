@@ -1,0 +1,54 @@
+name: Docs drift — the skill said X, Loop does Y
+description: Report where the skill's answer disagrees with how the Loop API actually behaves.
+title: "[drift] "
+labels: ["docs-drift"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most valuable report you can file. The skill answers only from a
+        snapshot of Loop's published documentation, so drift means either the docs
+        changed, the snapshot is stale, or the conversion mangled a page — and all
+        three are fixable once someone notices.
+
+        **Do not paste credentials, tokens, account numbers, or full response bodies
+        from a live account.** Redact before posting.
+  - type: textarea
+    id: said
+    attributes:
+      label: What the skill told you
+      description: Paste the assistant's answer, and the reference file it cited if it named one.
+      placeholder: "It said the endpoint is POST /v1/... citing references/payments.md"
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      description: The real behaviour — status code, error message (redacted), or the correct documented value.
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: Documentation page
+      description: The Loop devportal URL that covers this, if you know it.
+      placeholder: https://sandbox.loop.co.ke/devportal/docs/loop-api/...
+  - type: input
+    id: fetched
+    attributes:
+      label: Snapshot date
+      description: The `fetched` date at the top of the reference file the skill cited.
+      placeholder: "2026-08-13"
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of drift is this?
+      options:
+        - The skill invented something not in the docs
+        - The docs snapshot is out of date
+        - The page converted badly (content missing or garbled)
+        - The docs themselves are wrong or ambiguous
+        - Not sure
+    validations:
+      required: true
