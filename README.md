@@ -358,11 +358,13 @@ not those marks.
 
 <div align="center">
 
-### 🛠️ Built &amp; maintained by **Epale**
+### 🛠️ Created by [**NSAIT.CO.KE**](https://nsait.co.ke)
 
-#### Powered by **Robyspace AI**
+#### Nairobi Space of AI Tools
 
-<sub>Made in Kenya 🇰🇪 · for developers building on LOOP</sub>
+<sub>Built &amp; maintained by <b>Epale</b></sub>
+
+<sub>Made in Nairobi 🇰🇪 · for developers building on LOOP</sub>
 
 <br>
 
