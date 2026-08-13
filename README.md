@@ -468,6 +468,7 @@ not those marks.
 [![LinkedIn](https://img.shields.io/badge/James%20Epale-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jamesepale/)
 [![TikTok](https://img.shields.io/badge/@b0ijimi-000000?style=for-the-badge&logo=tiktok&logoColor=white)](https://www.tiktok.com/@b0ijimi)
 [![GitHub](https://img.shields.io/badge/imodoiepale-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/imodoiepale)
+[![LinkedIn](https://img.shields.io/badge/Leo%20Chrisben%20Evans-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/leo-chrisben-evans-a49570322/)
 [![GitHub](https://img.shields.io/badge/chrisleo16-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/chrisleo-16)
 
 <sub>Made in Nairobi 🇰🇪 · for developers building on LOOP</sub>
