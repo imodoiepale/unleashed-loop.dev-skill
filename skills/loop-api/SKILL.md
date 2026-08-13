@@ -45,6 +45,11 @@ the whole corpus into context.
 
 Then read the specific file(s) you need. Common entry points:
 
+- `references/api-flows.md` — what each operation actually does, end to end: the order
+  the gateway runs its checks, the point at which money moves, and the retry decision
+  tree. **Read this for any "is this possible?" or "why did this fail?" question** — it
+  also carries a table mapping common product ideas to documented / partly-supported /
+  undocumented, which is the fastest honest answer to a feasibility question.
 - `references/conventions.md` — the cross-cutting request/response rules. **Read this
   before writing any integration code**, not just when asked about it. It carries the
   rules a developer is most likely to get wrong in a way that costs money rather than

@@ -106,8 +106,17 @@ def tool_index() -> str:
     manifest = REFERENCES / "manifest.json"
     header = ""
     if manifest.exists():
-        data = json.loads(manifest.read_text(encoding="utf-8"))
-        header = f"Loop API docs — {data.get('page_count', len(files))} pages, fetched {data.get('fetched', '?')}\n\n"
+        # A corrupt manifest must not take the whole server down — the pages are still
+        # readable without it, and losing the index entirely would push the agent back
+        # onto memory, which is the failure this project exists to prevent.
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            data = {}
+        header = (
+            f"Loop API docs — {data.get('page_count', len(files))} pages, "
+            f"fetched {data.get('fetched', '?')}, capture {data.get('capture', 'unknown')}\n\n"
+        )
     lines = [header + "| slug | title | source |", "| --- | --- | --- |"]
     for path in files:
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -120,6 +129,18 @@ def tool_search(query: str, context: int = 3) -> str:
     files = corpus()
     if not files:
         return not_populated()
+    if not query.strip():
+        return "Provide a search term — an endpoint name, a field, or an error code."
+
+    # Clamp the window. Left unbounded, one call returns the entire corpus and floods
+    # the agent's context, crowding out the very documentation it went looking for.
+    context = max(0, min(int(context), 20))
+
+    # The query is compiled as a regex for power users, but it is also attacker-
+    # reachable. Cap the length: a long hand-crafted pattern is the input that turns
+    # catastrophic backtracking into a hang.
+    if len(query) > 200:
+        return "Search term too long (max 200 characters). Narrow it."
     try:
         pattern = re.compile(query, re.IGNORECASE)
     except re.error:
@@ -161,11 +182,19 @@ def tool_get(slug: str) -> str:
     files = corpus()
     if not files:
         return not_populated()
-    path = REFERENCES / f"{slug}.md"
-    if not path.exists():
+
+    # The slug is attacker-reachable: an agent may pass through a value it read from a
+    # web page, a pull request, or a file. `REFERENCES / slug` is unsafe on its own —
+    # Python's `/` DISCARDS the left operand when the right is absolute, so a slug of
+    # "/etc/foo" escapes the corpus entirely, and "../.." walks out of it. Match against
+    # the known corpus instead of constructing a path from input, so nothing outside
+    # REFERENCES is reachable by any input at all.
+    wanted = slug.strip().removesuffix(".md")
+    match = next((p for p in files if p.stem == wanted), None)
+    if match is None:
         available = ", ".join(p.stem for p in files)
         return f"No page with slug {slug!r}. Available: {available}"
-    return path.read_text(encoding="utf-8", errors="replace") + "\n\n" + GROUNDING_NOTE
+    return match.read_text(encoding="utf-8", errors="replace") + "\n\n" + GROUNDING_NOTE
 
 
 def dispatch(name: str, args: dict) -> str:

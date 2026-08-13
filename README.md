@@ -211,6 +211,7 @@ they're the reason this beats reading the portal yourself:
 
 | 📄 File | What it gives you |
 | :--- | :--- |
+| 🔬 **[`api-flows.md`](skills/loop-api/references/api-flows.md)** | **What every API actually does**, as sequence diagrams — see below. |
 | 🧭 **[`conventions.md`](skills/loop-api/references/conventions.md)** | The rules that stop you double-paying: the `statusCode` bands, the envelope, the retry logic. **Read this first.** |
 | 🔐 **[`signing.md`](skills/loop-api/references/signing.md)** | The HMAC scheme all 9 endpoints share — with LOOP's 4 test vectors, **all recomputed and verified**. Check your code against these before touching sandbox. |
 | ⚠️ **[`doc-conflicts.md`](skills/loop-api/references/doc-conflicts.md)** | 15 places LOOP's docs disagree with themselves. Check here before assuming your code is wrong. |
@@ -265,6 +266,71 @@ for a token while presenting one. Use the Basic-auth form.
 | You want to… | Use |
 | :--- | :--- |
 | Find out if a payment went through | [Transaction Status Inquiry](skills/loop-api/references/transaction-status-inquiry.md) |
+
+---
+
+## 🔬 See exactly what the APIs are doing
+
+**[`api-flows.md`](skills/loop-api/references/api-flows.md)** breaks every operation
+down into sequence diagrams, so you can see where money moves and where a failure
+happened — instead of guessing from an error code.
+
+### The order the gateway runs its checks
+
+**No money leaves your till until every check passes.** This is why the error code tells
+you exactly how far your request got:
+
+| # | Check | Fails with | Money moved? |
+| :-: | :--- | :--- | :--- |
+| 1 | Bearer token valid | `401` | No |
+| 2 | Till registered to you | `401` | No |
+| 3 | Signature / timestamp / nonce | `401` | No |
+| 4 | Fields, amount, phone format, channel | `400` | No |
+| 5 | `txnReference` not already used | `404` | **Already did, earlier** |
+| 6 | Recipient exists on the rail | `461` `464` `422` | No |
+| 7 | Execute the transfer | `462` | No |
+| ✅ | Success | `200` | **Yes** |
+
+That `404` is the one that surprises people: it doesn't mean *nothing happened*, it
+means *this already happened*. On a retry, it's **confirmation of success**.
+
+### Deciding whether to retry
+
+```mermaid
+flowchart TD
+    A[Call returns] --> B{Got a response?}
+    B -->|No / timeout| C[UNRESOLVED — never assume failure]
+    B -->|Yes| D{statusCode}
+    D -->|200| E[Success — record refs]
+    D -->|4xx| F[Fix the payload]
+    D -->|404| G[Already accepted — do NOT resend]
+    D -->|500 / 502 / 503| C
+    C --> H[Retry with the SAME txnReference<br/>fresh timestamp + nonce + signature]
+    H --> I{Now 404?}
+    I -->|Yes| J[Original went through ✅]
+    I -->|No| D
+    style C fill:#fff3cd
+    style G fill:#d4edda
+    style J fill:#d4edda
+    style F fill:#f8d7da
+```
+
+### Validating an idea before you build it
+
+The file carries a full table. A sample:
+
+| Your idea | Verdict |
+| :--- | :--- |
+| Let customers pay in my app | ✅ Documented — LOOP Prompt + callback |
+| Pay salaries to bank accounts | ✅ Documented — Send Money PesaLink, one call each |
+| Pay 200 suppliers in one call | ⚠️ **No bulk endpoint** — 200 calls, you own the sequencing |
+| Pay everyone automatically each Friday | ⚠️ **No scheduler** — your cron, not LOOP's |
+| Check my till balance first | ❌ Not documented |
+| Refund a payout | ❌ Not documented — payouts are non-reversible |
+| Collect from a customer on M-Pesa | ❓ Page exists, not captured — check the portal |
+
+**❌ means "the docs don't cover it", not "impossible."** The skill is instructed to say
+so, and to point you at LOOP support — never to invent an endpoint to be helpful.
 
 ---
 

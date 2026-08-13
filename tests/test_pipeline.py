@@ -314,3 +314,85 @@ def test_mcp_searches_the_shipped_corpus():
     text = responses[0]["result"]["content"][0]["text"]
     assert "signing" in text.lower()
     assert "sandbox.loop.co.ke" in text
+
+
+# ---------------------------------------------------------------- MCP hardening
+
+def _get(slug: str) -> str:
+    return _mcp({
+        "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+        "params": {"name": "loop_docs_get", "arguments": {"slug": slug}},
+    })[0]["result"]["content"][0]["text"]
+
+
+@pytest.mark.parametrize("slug", [
+    "/etc/passwd",                    # absolute: Path('/refs') / '/etc/x' DISCARDS the base
+    "/etc/hosts",
+    "../" * 8 + "etc/passwd",         # relative walk out of the corpus
+    "signing/../../../../etc/passwd",
+    "....//....//etc/passwd",         # naive ".." stripping would collapse to ../../
+])
+def test_mcp_get_refuses_to_escape_the_corpus(slug, tmp_path):
+    """The slug reaches this server from wherever the agent got it — a web page, a PR
+    comment, a file. It must not be usable to read anything outside references/.
+
+    The original implementation built `REFERENCES / f"{slug}.md"`, which is unsafe:
+    Python's `/` discards the left operand when the right is absolute, so a slug of
+    "/etc/passwd" escaped the corpus entirely and read /etc/passwd.md.
+    """
+    secret = tmp_path / "secret.md"
+    secret.write_text("TOPSECRET-CANARY")
+    out = _get(slug)
+    assert "TOPSECRET-CANARY" not in out
+    assert "root:" not in out
+    assert out.startswith("No page with slug")
+
+    # And the same escape attempt aimed squarely at a real file must also fail.
+    assert "TOPSECRET-CANARY" not in _get(str(secret.with_suffix("")))
+
+
+@pytest.mark.parametrize("slug", ["signing", "signing.md", "  signing  "])
+def test_mcp_get_still_accepts_ordinary_slugs(slug):
+    """Hardening must not break the normal path, including forgiving variants."""
+    assert _get(slug).startswith("<!-- source:")
+
+
+def test_mcp_search_rejects_empty_and_oversized_queries():
+    def q(query, **kw):
+        return _mcp({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": {"name": "loop_docs_search", "arguments": {"query": query, **kw}},
+        })[0]["result"]["content"][0]["text"]
+
+    assert "Provide a search term" in q("   ")
+    # A long hand-crafted pattern is the input that turns catastrophic backtracking
+    # into a hang, so length is capped before compilation.
+    assert "too long" in q("a" * 250)
+
+
+def test_mcp_search_clamps_context_window():
+    """An unbounded context returns the whole corpus and floods the agent's context."""
+    def size(ctx):
+        return len(_mcp({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": {"name": "loop_docs_search",
+                       "arguments": {"query": "nonce", "context": ctx}},
+        })[0]["result"]["content"][0]["text"])
+
+    assert size(99999) == size(20), "context above the cap must behave as the cap"
+
+
+def test_mcp_survives_a_corrupt_manifest(tmp_path):
+    """A malformed manifest must not crash the index — losing it would push the agent
+    back onto memory, which is the failure this project exists to prevent."""
+    refs = tmp_path / "references"
+    refs.mkdir()
+    (refs / "manifest.json").write_text("{ this is not json")
+    (refs / "page.md").write_text("<!-- source: https://example.test/x -->\n# Page\nbody\n")
+    responses = _mcp({
+        "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+        "params": {"name": "loop_docs_index", "arguments": {}},
+    }, references=refs)
+    text = responses[0]["result"]["content"][0]["text"]
+    assert "page" in text
+    assert not responses[0]["result"].get("isError")

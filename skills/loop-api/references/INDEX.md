@@ -21,6 +21,7 @@ Transcribed from <https://sandbox.loop.co.ke/devportal/docs/loop-api/> on 2026-0
 
 | File | Why |
 | --- | --- |
+| [`api-flows.md`](./api-flows.md) | **What each API actually does**, as sequence diagrams — the order the gateway runs its checks, where money moves, the retry decision tree, and a table for validating an idea before building it. |
 | [`conventions.md`](./conventions.md) | **HTTP 200 does not mean success.** The envelope, the `statusCode` banding, and the retry rules. Getting these wrong causes double payments. |
 | [`signing.md`](./signing.md) | The HMAC-SHA256 scheme every payment endpoint shares, with verified test vectors. |
 | [`doc-conflicts.md`](./doc-conflicts.md) | 15 contradictions inside LOOP's own docs. Check here before telling a developer their code is wrong. |
