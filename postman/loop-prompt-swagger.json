@@ -1,0 +1,377 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "C2B LOOP Prompt (Request to Pay) — request a payment from a customer's\nLOOP wallet and have it authorised on their handset, straight into the\nmerchant till, via Mapping Service. The call is synchronous (it returns\nonce the prompt has been delivered), but payment completion is\nasynchronous — confirmed on the callBackUrl supplied with the request.\nSee the Integration steps in the operation description below.\n",
+    "version": "2",
+    "title": "LOOP Prompt"
+  },
+  "host": "sandbox.loop.co.ke/gateway",
+  "basePath": "/loop-prompt/2",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "security": [
+    {
+      "default": []
+    }
+  ],
+  "paths": {
+    "/services/process-request": {
+      "post": {
+        "summary": "Process LOOP Prompt (Merchant Request-to-Pay)",
+        "description": "\n\n**Test Credentials**\n| Merchant Till | Secret Key | Status |\n|----------------|------------|--------|\n| 133238 | hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8 | Active |\n| 133239 | hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8 | Active |\n| 133240 | hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8 | Active |\n**Integration steps**\n\n**Step 1 — Get authorization.**\n\n Obtain an OAuth2 bearer token with your\nAPI credentials and send it as `Authorization: Bearer {access_token}`\non every call. Obtain a fresh token before it expires — an expired\ntoken is rejected before the signature is even checked.\n\n**Step 2 — Sign the payload.**\n\nBuild the canonical string\n`merchantTill|timestamp|nonce` (pipe-joined, no whitespace) and\ncompute the lowercase-hex HMAC-SHA256 digest of it, keyed with the\ntill's secret. Generate `timestamp` and `nonce` fresh for every\nrequest, including retries.\n\n```python\nimport hmac, hashlib, uuid\nfrom datetime import datetime, timezone\n\n# Issued to your till at onboarding — never transmitted in the request\nSECRET_KEY = \"<your_secret_key>\"\nMERCHANT_TILL = \"<your_merchantTill>\"\n\n# Generate fresh values for every request, including retries\ntimestamp = datetime.now(timezone.utc).strftime(\"%Y-%m-%dT%H:%M:%SZ\")\nnonce = str(uuid.uuid4()).lower()\n\n# Canonical string: merchantTill|timestamp|nonce\nmessage = f\"{MERCHANT_TILL}|{timestamp}|{nonce}\"\n\nsignature = hmac.new(\n    SECRET_KEY.encode(\"utf-8\"),\n    message.encode(\"utf-8\"),\n    hashlib.sha256\n).hexdigest()  # lowercase hex — not Base64\n\n# timestamp, nonce and signature go inside requestParameters\n```\n\nVerify your implementation against this worked example before\nsending a live request — same inputs must reproduce the same\nsignature: secret key `hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8`,\nmerchantTill `133239`, timestamp `2026-07-21T07:37:56Z`, nonce\n`3a4c1f3d-5b00-478f-bd18-4ccf6fae895a` -> signature\n`557dc74f9e53ec51b1c48aeaebe60bc89e108b753d7874336286c333a3692c5c`.\n\n**Step 3 — Build the request body.**\n\nAssemble the service envelope\n(`serviceCode`, `txnReference`, `requestParameters`) with the signed\n`timestamp`, `nonce` and `signature` nested inside\n`requestParameters` alongside `merchantTill`, `mobileNo`, `amount`,\n`reason` and `callBackUrl`. See ProcessLoopPromptRequest below.\n\n**Step 4 — Send the request.** \n\nPOST the signed body with your bearer\ntoken to `/services/process-request`. The call is\nsynchronous and confirms only that the prompt was delivered — not\nthat the customer has paid.\n\n**Step 5 — Read the response.**\n\nBranch on the `statusCode` field inside\nthe response body, not the HTTP status line — the gateway returns\nHTTP 200 for almost every outcome, handled failures included. See\nthe statusCode table on the 200 response below.\n\n**Step 6 — Handle the completion callback.**\n\n Once the customer\nauthorises, LOOP POSTs the actual payment confirmation to the\n`callBackUrl` supplied in Step 3. Acknowledge it with a 2xx quickly,\nstay idempotent on `transactionRef`, and only release goods on this\ncallback — never on the Step 5 response alone. See\nCompletionCallbackPayload.\n\n**Step 7 — Handle failures and retries.**\n\n On a timeout or a 500/502\nstatusCode, retry with the same `txnReference` and a fresh\ntimestamp/nonce/signature. On any 4xx statusCode, correct the\npayload before retrying — resending it unchanged fails the same\nway.\n\n**Step 8 — Test in sandbox, then go live.**\n\n Sandbox accepts only\nmerchant tills 133238, 133239 and 133240, sharing one sandbox\nsecret key; any other till is rejected with statusCode 401.\nProduction tills, secrets and endpoint URL are issued per merchant\nat onboarding — everything else about the contract stays the same.\n",
+        "operationId": "processLoopPrompt",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProcessLoopPromptRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The gateway returns HTTP 200 for essentially every outcome, success or handled failure — the authoritative result is the `statusCode` field in the response body, not the HTTP status line:\n\n| statusCode | Meaning | Returned when |\n|---|---|---|\n| 200 | Success | The prompt was accepted and delivered to the customer. |\n| 400 | Bad request | A required field is missing/empty, amount is non-numeric or ≤ 0, mobileNo fails format validation, callBackUrl is not an absolute https URL, or txnReference is missing. |\n| 401 | Unauthorized | The till is not registered to you, or the signature, timestamp or nonce did not verify. |\n| 413 | Data parsing error | The request payload could not be parsed. |\n| 463 | Merchant lookup failed | The till supplied did not resolve to a merchant. |\n| 464 | Request declined | Declined because of the data supplied — see `message` for the reason. |\n| 500 | System error | Unexpected error while processing. |\n| 502 | Service error | Temporarily unable to process; not caused by your payload. |\n\ndata is an empty object `{}` on every non-200 statusCode.\n",
+            "schema": {
+              "$ref": "#/definitions/RtpEnvelope"
+            }
+          },
+          "500": {
+            "description": "A genuine unhandled server error (rare — distinct from the handled statusCode 500 returned inside a 200). Carries real HTTP 500 and statusCode 500 in the body.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "default": []
+          }
+        ],
+        "x-auth-type": "Application & Application User",
+        "x-throttling-tier": "Unlimited"
+      }
+    }
+  },
+  "securityDefinitions": {
+    "default": {
+      "type": "oauth2",
+      "authorizationUrl": "https://sandbox.loop.co.ke/gateway/authorize",
+      "flow": "implicit",
+      "scopes": {}
+    }
+  },
+  "definitions": {
+    "ProcessLoopPromptRequest": {
+      "type": "object",
+      "required": [
+        "requestParameters",
+        "serviceCode",
+        "txnReference"
+      ],
+      "properties": {
+        "serviceCode": {
+          "type": "string",
+          "example": "NEO_MRCHNT_RTP",
+          "description": "Identifies the operation being requested. Must be exactly NEO_MRCHNT_RTP."
+        },
+        "txnReference": {
+          "type": "string",
+          "example": "9f1b2c3e-8a4d-4f6b-9c2e-7d5a1e8b4f0c",
+          "description": "Your unique reference for this request. Must be unique across every request you have ever sent — a repeat is refused as a duplicate (statusCode 404). A UUID v4 is recommended. Reuse the same value only when retrying the same payment after a 5xx or a timeout."
+        },
+        "requestParameters": {
+          "$ref": "#/definitions/RtpRequestParameters"
+        }
+      }
+    },
+    "RtpRequestParameters": {
+      "type": "object",
+      "required": [
+        "amount",
+        "callBackUrl",
+        "merchantTill",
+        "mobileNo",
+        "nonce",
+        "reason",
+        "signature",
+        "timestamp"
+      ],
+      "properties": {
+        "merchantTill": {
+          "type": "string",
+          "example": "133239",
+          "description": "The merchant till collecting the payment. Must be a till issued to you — in sandbox, one of 133238, 133239, 133240. Also an input to the signature; changing this without re-signing invalidates the request."
+        },
+        "mobileNo": {
+          "type": "string",
+          "example": "254704540384",
+          "description": "The customer's mobile number, which receives the prompt. Accepts 2547XXXXXXXX, 07XXXXXXXX or +2547XXXXXXXX — 8–12 digits, numeric apart from an optional leading +.",
+          "pattern": "^\\+?[0-9]{8,12}$"
+        },
+        "amount": {
+          "type": "string",
+          "example": "100.00",
+          "description": "The amount to request, as a decimal string (e.g. 100.00). Must be numeric and greater than zero.",
+          "pattern": "^[0-9]+(\\.[0-9]{1,2})?$"
+        },
+        "reason": {
+          "type": "string",
+          "example": "Payment for goods",
+          "description": "Human-readable narration for the payment. Shown to the customer on the prompt, so keep it recognisable."
+        },
+        "callBackUrl": {
+          "type": "string",
+          "format": "uri",
+          "example": "https://partner.example.com/api/v1/payments/callback",
+          "description": "Absolute https URL that receives the completion notification (see CompletionCallbackPayload). Must include a host; a plain http URL is rejected at request time."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-07-21T07:37:56Z",
+          "description": "Request timestamp, ISO-8601 UTC (yyyy-MM-dd'T'HH:mm:ss'Z'), second precision, generated at the moment of sending. Outside the accepted window the request is rejected as a replay."
+        },
+        "nonce": {
+          "type": "string",
+          "format": "uuid",
+          "example": "3a4c1f3d-5b00-478f-bd18-4ccf6fae895a",
+          "description": "Single-use random value, lowercase UUID v4, fresh for every request — including retries. Reuse within the replay window is rejected, even on a retry of the same txnReference."
+        },
+        "signature": {
+          "type": "string",
+          "example": "557dc74f9e53ec51b1c48aeaebe60bc89e108b753d7874336286c333a3692c5c",
+          "description": "Lowercase hex HMAC-SHA256 digest of the canonical string \"merchantTill|timestamp|nonce\" (pipe-joined, no whitespace), keyed with the till's secret. Verified before the payment is attempted; a Base64 or uppercase-hex digest will not verify."
+        }
+      }
+    },
+    "RtpEnvelope": {
+      "type": "object",
+      "properties": {
+        "statusCode": {
+          "type": "integer",
+          "example": 200,
+          "description": "The authoritative outcome code — see the table above. Branch on this, not on the HTTP status."
+        },
+        "message": {
+          "type": "string",
+          "example": "service process accepted",
+          "description": "Human-readable outcome — the failure detail on any non-200 statusCode."
+        },
+        "data": {
+          "type": "object",
+          "example": {
+            "serviceTransactionStatus": "COMPLETED",
+            "requestReference": "1042",
+            "txnReference": "9f1b2c3e-8a4d-4f6b-9c2e-7d5a1e8b4f0c",
+            "response": {
+              "transactionRef": "TXN-20260721-000001042",
+              "rspMessage": "SUCCESS",
+              "orderNo": "RPM202607215839217406",
+              "orderToken": "20260721RPM202607215839217406",
+              "orderDate": "20260721",
+              "totalAmount": "100.00",
+              "rspCode": "00000000",
+              "loopRefNo": "K7QW3ZP1D8XM",
+              "serverTime": "20260721073757",
+              "responseId": "8f2c41d7a9b34e15b6c0d2e7f31a5c94"
+            }
+          },
+          "description": "The result payload. Empty object `{}` when statusCode is not 200. On success, matches RtpSuccessData.",
+          "properties": {}
+        }
+      },
+      "description": "Common response envelope for every outcome, success or handled failure."
+    },
+    "RtpSuccessData": {
+      "type": "object",
+      "properties": {
+        "serviceTransactionStatus": {
+          "type": "string",
+          "example": "COMPLETED",
+          "description": "State of the request — COMPLETED once the prompt has been accepted and delivered."
+        },
+        "requestReference": {
+          "type": "string",
+          "example": "1042",
+          "description": "LOOP's reference for this request."
+        },
+        "txnReference": {
+          "type": "string",
+          "example": "9f1b2c3e-8a4d-4f6b-9c2e-7d5a1e8b4f0c",
+          "description": "Echo of the reference supplied on the request, for correlation."
+        },
+        "response": {
+          "$ref": "#/definitions/RtpPaymentDetails"
+        }
+      },
+      "description": "The shape of `data` when statusCode is 200."
+    },
+    "RtpPaymentDetails": {
+      "type": "object",
+      "properties": {
+        "transactionRef": {
+          "type": "string",
+          "example": "TXN-20260721-000001042",
+          "description": "LOOP's transaction reference. Repeated on the completion callback — use it to correlate the two, and quote it in any support query."
+        },
+        "rspMessage": {
+          "type": "string",
+          "example": "SUCCESS",
+          "description": "SUCCESS when the prompt was accepted."
+        },
+        "orderNo": {
+          "type": "string",
+          "example": "RPM202607215839217406",
+          "description": "Order number generated for this payment."
+        },
+        "orderToken": {
+          "type": "string",
+          "example": "20260721RPM202607215839217406",
+          "description": "Composite token combining order date and order number, used for tracking."
+        },
+        "orderDate": {
+          "type": "string",
+          "example": "20260721",
+          "description": "Date the order was created, format yyyyMMdd."
+        },
+        "totalAmount": {
+          "type": "string",
+          "example": "100.00",
+          "description": "Total amount of the transaction."
+        },
+        "rspCode": {
+          "type": "string",
+          "example": "00000000",
+          "description": "Processing response code. 00000000 on success."
+        },
+        "loopRefNo": {
+          "type": "string",
+          "example": "K7QW3ZP1D8XM",
+          "description": "LOOP's internal reference number for this transaction."
+        },
+        "serverTime": {
+          "type": "string",
+          "example": "20260721073757",
+          "description": "Timestamp at time of processing, format yyyyMMddHHmmss."
+        },
+        "responseId": {
+          "type": "string",
+          "example": "8f2c41d7a9b34e15b6c0d2e7f31a5c94",
+          "description": "Unique identifier for this specific response instance."
+        }
+      },
+      "description": "Payment details. Individual fields are returned only when available for the transaction — treat each as optional and key reconciliation on transactionRef."
+    },
+    "CompletionCallbackPayload": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "COMPLETED",
+          "description": "COMPLETED for a settled payment."
+        },
+        "rspMessage": {
+          "type": "string",
+          "example": "Success"
+        },
+        "rspCode": {
+          "type": "string",
+          "example": "00000000",
+          "description": "00000000 on success."
+        },
+        "transactionRef": {
+          "type": "string",
+          "example": "TXN-20260721-000001042",
+          "description": "The transaction reference returned on the synchronous response — the correlation key."
+        },
+        "amount": {
+          "type": "string",
+          "example": "100.00",
+          "description": "The amount paid."
+        },
+        "currency": {
+          "type": "string",
+          "example": "KES",
+          "description": "ISO currency code."
+        },
+        "resultTime": {
+          "type": "string",
+          "example": "20260721073802",
+          "description": "Completion timestamp, format yyyyMMddHHmmss."
+        },
+        "merchantTill": {
+          "type": "string",
+          "example": "133239",
+          "description": "The till that collected the payment."
+        },
+        "mobileNo": {
+          "type": "string",
+          "example": "254704540384",
+          "description": "The customer's mobile number, normalised to 254 format."
+        },
+        "reason": {
+          "type": "string",
+          "example": "Payment for goods",
+          "description": "The narration supplied on the request."
+        },
+        "orderNo": {
+          "type": "string",
+          "example": "RPM202607215839217406"
+        },
+        "orderToken": {
+          "type": "string",
+          "example": "20260721RPM202607215839217406"
+        },
+        "orderDate": {
+          "type": "string",
+          "example": "20260721"
+        },
+        "loopRefNo": {
+          "type": "string",
+          "example": "K7QW3ZP1D8XM",
+          "description": "LOOP's reference for the settled transaction."
+        },
+        "responseId": {
+          "type": "string",
+          "example": "8f2c41d7a9b34e15b6c0d2e7f31a5c94"
+        },
+        "serverTime": {
+          "type": "string",
+          "example": "20260721073757"
+        }
+      },
+      "description": "Payload LOOP POSTs to the merchant's callBackUrl once the customer authorises (or the prompt otherwise resolves). Not a call the merchant makes to LOOP — documented here for reference. The merchant's endpoint must accept POST over https, acknowledge with a 2xx quickly, and be idempotent on transactionRef."
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "statusCode": {
+          "type": "integer",
+          "example": 500,
+          "description": "Application-level error code."
+        },
+        "message": {
+          "type": "string",
+          "example": "An unexpected error occurred while processing the request",
+          "description": "Error description."
+        },
+        "data": {
+          "type": "object",
+          "example": {},
+          "properties": {}
+        }
+      }
+    }
+  },
+  "x-wso2-api-key-header": "ApiKey"
+}
