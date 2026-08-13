@@ -1,0 +1,6 @@
+requests>=2.31
+beautifulsoup4>=4.12
+markdownify>=0.13
+PyYAML>=6.0
+# Optional: only needed for `--render` when the docs portal is client-rendered.
+playwright>=1.44

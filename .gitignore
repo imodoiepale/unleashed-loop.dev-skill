@@ -1,0 +1,29 @@
+# Secrets — never commit Loop credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+
+# Doc ingestion working files
+.cache/
+build/
+dist/
+*.skill
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+
+# Editors / OS
+.DS_Store
+.idea/
+*.swp
