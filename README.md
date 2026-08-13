@@ -459,7 +459,10 @@ not those marks.
 
 #### Nairobi Space of AI Tools
 
-<sub>Built &amp; maintained by <b>Epale</b> &amp; <b>Chrisben</b> </sub>
+<sub>Built &amp; maintained by
+<a href="https://www.linkedin.com/in/jamesepale/"><b>Epale</b>&nbsp;<img src="https://cdn.simpleicons.org/linkedin/0A66C2" height="11" alt="LinkedIn"></a>
+&amp;
+<a href="https://www.linkedin.com/in/leo-chrisben-evans-a49570322/"><b>Chrisben</b>&nbsp;<img src="https://cdn.simpleicons.org/linkedin/0A66C2" height="11" alt="LinkedIn"></a></sub>
 
 
 <br>
