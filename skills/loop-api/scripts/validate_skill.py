@@ -14,7 +14,9 @@ import re
 import sys
 from pathlib import Path
 
-SKILL_DIR = Path(__file__).resolve().parent.parent
+# Defaults to the skill this script ships inside; accepts a path so CI can validate
+# any skill directory built from these conventions.
+SKILL_DIR = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
 SKILL_MD = SKILL_DIR / "SKILL.md"
 
 MAX_BODY_LINES = 500

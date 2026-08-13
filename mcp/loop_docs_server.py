@@ -19,11 +19,17 @@ or in any harness's MCP config:
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
-REFERENCES = Path(__file__).resolve().parent.parent / "skills" / "loop-api" / "references"
+# Overridable so the server can be pointed at a corpus built elsewhere — a shared
+# snapshot, a second product's references, or an empty directory under test.
+REFERENCES = Path(
+    os.environ.get("LOOP_REFERENCES_DIR")
+    or Path(__file__).resolve().parent.parent / "skills" / "loop-api" / "references"
+)
 PROTOCOL_VERSION = "2025-06-18"
 
 GROUNDING_NOTE = (

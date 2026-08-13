@@ -46,19 +46,37 @@ trust with a payments integration and one you have to double-check anyway.
 git clone https://github.com/imodoiepale/unleashed-loop.dev-skill
 cd unleashed-loop.dev-skill
 
-# 1. Build the knowledge base from Loop's docs (one command, ~2 minutes)
-./tools/setup.sh
-
-# 2. Install into your harness — run this from your own project directory
+# Install into your harness — run this from your own project directory
 python /path/to/unleashed-loop.dev-skill/tools/install.py --harness claude
 ```
 
 Then just ask. The skill triggers on Loop, NCBA Loop, the devportal, and on payment /
 payout / balance / transaction questions even when you don't name an endpoint.
 
-> **`references/` ships empty on purpose.** You generate your own snapshot of Loop's
-> documentation rather than trusting one baked in by a stranger — the provenance stays
-> yours, the corpus stays current, and Loop's documentation stays under Loop's terms.
+### What ships in the box
+
+`references/` is populated — 11 of the portal's 13 documentation pages, plus four
+derived files that are the reason this is more useful than the docs themselves:
+
+| File | Why it exists |
+| --- | --- |
+| `conventions.md` | **The gateway returns HTTP 200 for failures too.** The `statusCode` banding, the request envelope, and the retry rules that stop you double-paying. |
+| `signing.md` | The HMAC-SHA256 scheme all nine endpoints share, with LOOP's four published test vectors — **all recomputed and verified**. |
+| `doc-conflicts.md` | 15 places LOOP's own documentation contradicts itself. |
+| `coverage.md` | What is *not* here, so the agent doesn't tell you a feature doesn't exist when it just wasn't captured. |
+
+> **Capture method matters.** This corpus was **transcribed** from portal text rather
+> than crawled, because the portal was not reachable from the machine that built it.
+> The content is LOOP's; the transcription is not machine-verified. Every file records
+> this in a `capture:` header, and the skill is instructed to flag it when an exact
+> value is about to move real money.
+>
+> Re-run the crawler from a machine that can reach the portal to replace it with a
+> machine-verified corpus and pick up the two missing pages:
+>
+> ```bash
+> ./tools/setup.sh     # or: ./tools/crawl_loop.sh && python tools/ingest_docs.py --input-dir .cache/loop-docs/pages
+> ```
 
 ### What `setup.sh` does
 

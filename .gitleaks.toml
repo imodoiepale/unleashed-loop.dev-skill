@@ -27,7 +27,20 @@ behaviour we care about.
 These values are invented, have never been valid anywhere, and are confined to this
 directory. The exemption is by path rather than by regex so that no real credential
 elsewhere in the repository can slip through under the same rule.
+
+Separately, `regexes` below exempts one specific literal: LOOP's sandbox signing
+secret. LOOP publishes it in their own public documentation, shared across all three
+sandbox tills (133238/133239/133240) and explicitly marked testing-only. It is
+required in references/signing.md because the four published HMAC test vectors cannot
+be verified without it — and being able to check your signing implementation against
+a known-good vector is the single most useful debugging aid in these docs.
+
+That exemption is the exact string and nothing else. A different secret, including a
+production key for the same merchant, still trips the scanner.
 """
 paths = [
   '''evals/.*\.json''',
+]
+regexes = [
+  '''hyqd7bwMr9Kv-C5PW4n7uF4TiMnMp_hyvyhYYkYlcU8''',
 ]

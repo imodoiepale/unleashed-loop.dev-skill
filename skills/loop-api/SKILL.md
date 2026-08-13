@@ -45,13 +45,40 @@ the whole corpus into context.
 
 Then read the specific file(s) you need. Common entry points:
 
-- `references/manifest.json` — what was captured, from where, and when. Check the
-  `fetched` date when a developer reports that reality disagrees with the docs.
+- `references/conventions.md` — the cross-cutting request/response rules. **Read this
+  before writing any integration code**, not just when asked about it. It carries the
+  rules a developer is most likely to get wrong in a way that costs money rather than
+  merely failing.
+- `references/signing.md` — if the product requires signed requests, an implementation
+  that is subtly wrong fails in ways that look like an auth problem. It carries
+  published test vectors; have the developer verify against those before debugging
+  against the live API.
+- `references/doc-conflicts.md` — **check this before telling a developer their code is
+  wrong.** Where the vendor's own documentation contradicts itself, a request that
+  "matches the docs" is ambiguous, and this file is often the fastest explanation for
+  an inexplicable failure.
+- `references/coverage.md` — **check this before saying a capability doesn't exist.**
+  Absent from the corpus is not the same as absent from the product.
+- `references/manifest.json` — what was captured, from where, when, and by which
+  capture method. Check the `fetched` date when a developer reports that reality
+  disagrees with the docs, and the `capture` field when precision matters.
 - Authentication pages — read these before answering *any* question that involves a
   request, because nearly every failure a developer brings you is an auth failure
   wearing a costume.
 - Endpoint pages — for request/response shapes and required fields.
-- Error/status pages — for decoding a specific failure.
+
+### Capture method affects how firmly you should speak
+
+`manifest.json` records how the corpus was built. A crawler-generated corpus is a
+mechanical copy of the published pages. A manually transcribed one carries the same
+content but has not been machine-verified, so a typo is possible in a way it is not
+for a crawl.
+
+When the corpus is transcribed and the developer is about to move real money on the
+strength of an exact value — a field name, an enum, a URL — say the value should be
+confirmed against the live portal or its Swagger. Do not let that caveat turn into
+hedging on everything: the content is the vendor's, and it is the best available
+source until someone runs the crawler.
 
 ### If `references/` is empty or missing
 

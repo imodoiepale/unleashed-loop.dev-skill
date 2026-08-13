@@ -7,6 +7,21 @@ All notable changes to this project are documented here, following
 ## [Unreleased]
 
 ### Added
+- **Populated `references/`** — 11 of the portal's 13 documentation pages, captured by
+  manual transcription (`capture: manual-transcription`) because the portal is not
+  reachable from the build environment. Covers Authorisation, LOOP Prompt, Transaction
+  Status Inquiry, all three Pay-to endpoints and all three Send Money endpoints.
+- Four derived reference files consolidated across pages: `signing.md` (the shared
+  HMAC-SHA256 scheme, with LOOP's four published test vectors **recomputed and
+  verified**), `conventions.md` (the `statusCode`-in-body convention, request envelope,
+  and retry rules), `doc-conflicts.md` (15 self-contradictions found in LOOP's own
+  documentation), and `coverage.md` (what the corpus does not contain).
+- `LOOP_REFERENCES_DIR` environment variable for the MCP server, and an optional
+  skill-directory argument for `validate_skill.py`, so both can target a corpus or
+  skill other than the one they ship beside.
+- Two capture methods are now a documented, first-class distinction: every reference
+  file and `manifest.json` record `capture:`, and `SKILL.md` instructs the agent to
+  qualify exact values when the corpus was transcribed rather than crawled.
 - Loop API skill (`skills/loop-api/`) with three workflows: feasibility triage
   ("is this possible with Loop?"), building an integration, and debugging a failing
   call. `SKILL.md` deliberately contains no API facts — every claim the agent makes

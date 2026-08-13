@@ -14,6 +14,7 @@ without making the skill safer.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -185,9 +186,26 @@ def test_validator_rejects_reference_without_provenance(corpus):
         planted.unlink()
 
 
-def test_validator_flags_empty_corpus():
-    result = _validate()
+def test_validator_flags_empty_corpus(tmp_path):
+    """Warn when the corpus is empty — the one state where the skill silently cannot
+    do its job. Built in a temp skill dir so the check survives this repo's own
+    references being populated."""
+    skill = tmp_path / "skills" / "loop-api"
+    (skill / "references").mkdir(parents=True)
+    skill.joinpath("SKILL.md").write_text(
+        "---\nname: loop-api\ndescription: Use this when testing the validator.\n---\n\n# Test\n"
+    )
+    result = subprocess.run(
+        [sys.executable, str(REPO / "skills" / "loop-api" / "scripts" / "validate_skill.py"), str(skill)],
+        capture_output=True, text=True,
+    )
     assert "no generated pages yet" in result.stdout
+
+
+def test_validator_accepts_the_shipped_corpus():
+    """The references committed to this repo must pass their own provenance check."""
+    result = _validate()
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 # ---------------------------------------------------------------- installer
@@ -236,11 +254,14 @@ def test_installer_uses_absolute_path_when_skill_is_outside_project(tmp_path):
 
 # ---------------------------------------------------------------- MCP server
 
-def _mcp(*messages: dict) -> list[dict]:
+def _mcp(*messages: dict, references: Path | None = None) -> list[dict]:
     payload = "".join(json.dumps(m) + "\n" for m in messages)
+    env = dict(os.environ)
+    if references is not None:
+        env["LOOP_REFERENCES_DIR"] = str(references)
     result = subprocess.run(
         [sys.executable, str(REPO / "mcp" / "loop_docs_server.py")],
-        input=payload, capture_output=True, text=True, timeout=30,
+        input=payload, capture_output=True, text=True, timeout=30, env=env,
     )
     return [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
 
@@ -271,12 +292,25 @@ def test_mcp_unknown_method_returns_error():
     assert responses[0]["error"]["code"] == -32601
 
 
-def test_mcp_reports_empty_corpus_instead_of_guessing():
+def test_mcp_reports_empty_corpus_instead_of_guessing(tmp_path):
     """With no references, the server must tell the agent to stop rather than let it
     fall back on memory — that fallback is the failure this project exists to prevent."""
+    empty = tmp_path / "references"
+    empty.mkdir()
     responses = _mcp({
         "jsonrpc": "2.0", "id": 1, "method": "tools/call",
         "params": {"name": "loop_docs_search", "arguments": {"query": "anything"}},
-    })
+    }, references=empty)
     text = responses[0]["result"]["content"][0]["text"]
     assert "ingest_docs.py" in text or "No matches" in text
+
+
+def test_mcp_searches_the_shipped_corpus():
+    """A real query against the committed references must return a grounded hit."""
+    responses = _mcp({
+        "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+        "params": {"name": "loop_docs_search", "arguments": {"query": "nonce"}},
+    })
+    text = responses[0]["result"]["content"][0]["text"]
+    assert "signing" in text.lower()
+    assert "sandbox.loop.co.ke" in text

@@ -3,18 +3,43 @@
 Thanks for helping make Loop integrations less painful. This project is small and the
 bar for contributing is low — but there is one rule that is not negotiable.
 
-## The rule: don't hand-write API facts
+## The rule: every API fact must trace to a published page
 
-`skills/loop-api/references/` is **generated** from Loop's published documentation by
-`tools/ingest_docs.py`. Pull requests that hand-edit reference files, or that add Loop
-endpoints, headers, or error codes to `SKILL.md`, will be closed.
+`skills/loop-api/references/` exists so a developer can trust what the skill says:
+every claim carries a source URL, a fetch date, and a capture method. Pull requests
+that add Loop endpoints, headers, or error codes to `SKILL.md`, or that introduce
+reference content with no traceable source, will be closed.
 
-This isn't pedantry. The entire value of the skill is that a developer can trust what
-it says because every claim traces to a source URL and a fetch date. One hand-written
-"I'm pretty sure the endpoint is..." poisons that guarantee, and nobody downstream can
-tell which parts are trustworthy anymore.
+This isn't pedantry. One "I'm pretty sure the endpoint is..." poisons the guarantee,
+and nobody downstream can tell which parts are trustworthy anymore.
+
+### Two legitimate capture methods
+
+Each reference file records which was used, in a `<!-- capture: -->` header and in
+`manifest.json`.
+
+| `capture` | How it was produced | Trust |
+| --- | --- | --- |
+| `crawler` | `tools/ingest_docs.py` against the live portal | Mechanical copy. **Preferred.** |
+| `manual-transcription` | Portal text supplied by a maintainer, transcribed by hand | Same content, but not machine-verified — a typo is possible. |
+
+The corpus currently in this repository is `manual-transcription`: the portal was not
+reachable from the build machine, so the maintainer supplied the rendered page text.
+Running the crawler replaces it with a `crawler` corpus, which is strictly better.
+
+**Transcription is a fallback, not a licence to write from memory.** If you contribute
+transcribed content you must have the page in front of you, and the file must record
+the source URL it came from. Adding a field, code, or endpoint you did not read on a
+published page is the thing this rule prohibits, regardless of capture method.
 
 If a reference page converts badly, **fix the converter**, not the output.
+
+### Verify what can be verified
+
+Where the documentation publishes something checkable — test vectors, worked examples,
+sample signatures — recompute it and say so in the file. The four HMAC vectors in
+`references/signing.md` were verified this way, which is why that file's central claim
+is stronger than a transcription alone would be.
 
 ## What's welcome
 
