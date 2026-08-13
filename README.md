@@ -389,11 +389,21 @@ not those marks.
 
 <div align="center">
 
+<!-- NSAIT logo — uncomment once assets/nsait-logo.png is committed. See assets/README.md.
+<img src="assets/nsait-logo.png" alt="NSAIT" height="56">
+-->
+
 ### 🛠️ Created by [**NSAIT.CO.KE**](https://nsait.co.ke)
 
 #### Nairobi Space of AI Tools
 
 <sub>Built &amp; maintained by <b>Epale</b></sub>
+
+<br>
+
+[![Website](https://img.shields.io/badge/nsait.co.ke-0969da?style=for-the-badge&logo=googlechrome&logoColor=white)](https://nsait.co.ke)
+[![TikTok](https://img.shields.io/badge/@b0ijimi-000000?style=for-the-badge&logo=tiktok&logoColor=white)](https://www.tiktok.com/@b0ijimi)
+[![GitHub](https://img.shields.io/badge/imodoiepale-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/imodoiepale)
 
 <sub>Made in Nairobi 🇰🇪 · for developers building on LOOP</sub>
 

@@ -17,10 +17,25 @@ everything else.
 
 | File | Purpose | Notes |
 | --- | --- | --- |
-| `loop-logo.png` | LOOP's mark, shown small and inline in the README | Source it from LOOP's own site or press kit, not a search-result thumbnail. Transparent background, ~200px wide is plenty for a 28px render. |
+| `nsait-logo.png` | NSAIT's mark, in the README footer beside the credit | Your own brand — use it wherever you like. Transparent background, ~400px wide renders crisply at 56px on high-DPI screens. |
+| `loop-logo.png` | LOOP's mark, small and inline in "What's in the box" | Source from LOOP's own site or press kit, **not** a search-result thumbnail. ~200px wide is plenty for a 28px render. |
 
-Once the file is here, uncomment the marked block in `README.md` (search for
-`loop-logo.png`).
+Both are wired up already but **commented out**, so nothing renders as a broken image
+while the files are missing. Once a file is here, open `README.md`, search for its
+filename, and delete the `<!--` and `-->` around that block.
+
+### Adding them
+
+```bash
+# from the repo root, with the file saved somewhere on your machine
+cp ~/Downloads/nsait-logo.png assets/
+git add assets/nsait-logo.png
+git commit -m "Add NSAIT logo"
+git push
+```
+
+PNG with a transparent background is the safe choice — it works on GitHub's light and
+dark themes alike. A logo on a white rectangle looks broken in dark mode.
 
 ## Trademark
 
