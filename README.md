@@ -459,8 +459,8 @@ not those marks.
 
 #### Nairobi Space of AI Tools
 
-<sub>Built &amp; maintained by <b>Epale</b></sub>
-<sub>Assisted by <b>Chrisben</b></sub>
+<sub>Built &amp; maintained by <b>Epale</b> &amp; <b>Chrisben</b> </sub>
+
 
 <br>
 
