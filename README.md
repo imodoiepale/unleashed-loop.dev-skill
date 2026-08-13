@@ -1,112 +1,302 @@
-<h1 align="center">unleashed-loop.dev-skill</h1>
+<div align="center">
 
-<p align="center">
-  <strong>Talk to the Loop (NCBA) developer API in plain English — from Claude Code, Codex, Cursor, or any MCP-capable agent.</strong>
-</p>
+# 🇰🇪 LOOP API Skill
 
-<p align="center">
-  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-blue.svg"></a>
-  <a href="#supported-harnesses"><img alt="harnesses" src="https://img.shields.io/badge/harnesses-Claude%20Code%20%7C%20Codex%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20MCP-brightgreen.svg"></a>
-</p>
+### Ask your AI coding assistant about the LOOP API — and get real answers, not invented ones.
+
+<br>
+
+[![Licence: MIT](https://img.shields.io/badge/Licence-MIT-2ea44f?style=for-the-badge)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-24%20passing-2ea44f?style=for-the-badge)](tests/test_pipeline.py)
+[![Docs pages](https://img.shields.io/badge/docs%20pages-11%20captured-0969da?style=for-the-badge)](skills/loop-api/references/)
+[![Signing](https://img.shields.io/badge/HMAC%20vectors-4%2F4%20verified-2ea44f?style=for-the-badge)](skills/loop-api/references/signing.md)
+
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-✓-d97757?style=flat-square)](#-works-with-your-tools)
+[![Codex](https://img.shields.io/badge/Codex-✓-000000?style=flat-square)](#-works-with-your-tools)
+[![Cursor](https://img.shields.io/badge/Cursor-✓-0098fa?style=flat-square)](#-works-with-your-tools)
+[![Windsurf](https://img.shields.io/badge/Windsurf-✓-09b6a2?style=flat-square)](#-works-with-your-tools)
+[![MCP](https://img.shields.io/badge/MCP-✓-6e40c9?style=flat-square)](#-works-with-your-tools)
+
+</div>
 
 ---
 
-Integrating with a bank API usually means keeping twelve documentation tabs open and
-guessing which one has the field name you need. This project turns Loop's developer
-documentation into a **skill** your coding agent can use — so you ask "can I pay out to
-several suppliers in one call?" and get an answer with the actual endpoint, the actual
-payload, and a link to the page it came from.
+## 😤 The problem
+
+You ask an AI assistant how to send money to M-Pesa using LOOP. It answers instantly,
+confidently, and **completely wrong** — an endpoint that doesn't exist, a field name it
+made up, an error code from a different bank entirely.
+
+You only find out forty minutes later, staring at a `401`.
+
+This happens because LOOP is a small, local API. The model has barely seen it, so it
+fills the gap with something that *sounds* right.
+
+## 💡 What this fixes
+
+This skill gives your assistant the **actual LOOP documentation** and one hard rule:
+
+> **Never state a LOOP endpoint, field, or error code from memory.**
+> Every claim must come from a file that records the page it came from and the date.
+
+When something isn't documented, the assistant is told to say _"the docs don't cover
+this — here's the page to check"_ instead of guessing.
 
 ```
-you  ▸ can I schedule supplier payouts from my Loop account every Friday?
-agent▸ reading references/INDEX.md … references/payments.md
-       Yes, with one caveat. Loop documents <endpoint> for this. The scheduling
-       is on your side — Loop doesn't expose a cron primitive. Here's the call:
-       [runnable code]
-       Source: sandbox.loop.co.ke/devportal/docs/loop-api/... (fetched 2026-08-13)
+you  ▸ can I pay 40 suppliers in one API call?
+
+ai   ▸ reading references/coverage.md, references/send-money-mpesa.md …
+
+       No — every Send Money call is one recipient. There is no bulk endpoint
+       in the documentation, so you'd loop 40 calls and reconcile them yourself.
+
+       Two things that will bite you:
+       • Each call needs its own unique txnReference. On a timeout you must
+         retry with the SAME one — a new one can pay twice.
+       • The gateway returns HTTP 200 even when a payment fails. Branch on
+         statusCode inside the body.
+
+       Source: send-money-mpesa.md → sandbox.loop.co.ke/devportal/docs/loop-api
 ```
 
-## Why this exists rather than "just paste the docs"
+---
 
-The failure mode of asking an LLM about a niche banking API is that it *invents* a
-plausible endpoint, and you don't find out for an hour. So the skill is built around a
-single hard constraint:
+## ✅ What it does / ❌ What it doesn't
 
-> **`SKILL.md` contains no API facts.** Every endpoint, header, field, and error code
-> the agent states must come from `references/`, which is generated from Loop's
-> published documentation with the source URL and fetch date stamped into every file.
+Being straight with you, because a tool that oversells itself wastes your time.
 
-If something isn't in the references, the skill instructs the agent to *say so* and
-point you at the page — rather than guess. That's the difference between a tool you can
-trust with a payments integration and one you have to double-check anyway.
+<table>
+<tr><th width="50%">✅ It does</th><th width="50%">❌ It does not</th></tr>
+<tr valign="top"><td>
 
-## Quick start
+- Answers **"is this possible with LOOP?"** from the real docs
+- Tells you **which endpoint** to call, and in what order
+- Gives you **request bodies with correct field names**
+- Explains **what an error code actually means**
+- Flags the places **LOOP's own docs contradict themselves**
+- Shows you the **source page** for every claim
+- Runs **fully offline** after install
+
+</td><td>
+
+- **Does not touch your API keys.** No tokens, no credentials, no login.
+- **Does not call the LOOP API.** It reads documentation. It cannot move money.
+- **Does not test your integration.** It cannot tell you if your code works — only whether it matches the docs.
+- **Is not official.** Not built or endorsed by LOOP or NCBA.
+- **Is not a contract.** For fees, limits and settlement, confirm with LOOP.
+- **Does not cover 2 of 13 pages** — see [`coverage.md`](skills/loop-api/references/coverage.md).
+
+</td></tr>
+</table>
+
+> [!IMPORTANT]
+> **No credentials, ever.** There is no code in this repository that sends a request to
+> LOOP, reads an API key, or handles a token. The only thing that touches the network is
+> the documentation downloader — and only to fetch public doc pages. Your keys stay
+> yours.
+
+---
+
+## 🚀 Get started in 60 seconds
 
 ```bash
 git clone https://github.com/imodoiepale/unleashed-loop.dev-skill
 cd unleashed-loop.dev-skill
 
-# Install into your harness — run this from your own project directory
+# From YOUR project folder, install into your assistant:
 python /path/to/unleashed-loop.dev-skill/tools/install.py --harness claude
 ```
 
-Then just ask. The skill triggers on Loop, NCBA Loop, the devportal, and on payment /
-payout / balance / transaction questions even when you don't name an endpoint.
+Swap `claude` for `codex`, `cursor`, `windsurf`, or `mcp`. That's it — no build step,
+no API key, no account.
 
-### What ships in the box
+Then just ask, in plain English:
 
-`references/` is populated — 11 of the portal's 13 documentation pages, plus four
-derived files that are the reason this is more useful than the docs themselves:
+<table>
+<tr><td>💬</td><td><i>"How do I collect a payment from a customer with LOOP?"</i></td></tr>
+<tr><td>💬</td><td><i>"Why does my request return 401 when my signature looks right?"</i></td></tr>
+<tr><td>💬</td><td><i>"What's the difference between Pay to Till and Send Money?"</i></td></tr>
+<tr><td>💬</td><td><i>"Can I send money to a bank account, not M-Pesa?"</i></td></tr>
+<tr><td>💬</td><td><i>"My payment timed out. Do I retry it?"</i></td></tr>
+</table>
 
-| File | Why it exists |
-| --- | --- |
-| `conventions.md` | **The gateway returns HTTP 200 for failures too.** The `statusCode` banding, the request envelope, and the retry rules that stop you double-paying. |
-| `signing.md` | The HMAC-SHA256 scheme all nine endpoints share, with LOOP's four published test vectors — **all recomputed and verified**. |
-| `doc-conflicts.md` | 15 places LOOP's own documentation contradicts itself. |
-| `coverage.md` | What is *not* here, so the agent doesn't tell you a feature doesn't exist when it just wasn't captured. |
+You don't need to name an endpoint. The skill switches itself on when you mention LOOP,
+NCBA Loop, a till, a paybill, PesaLink, or a payment problem.
 
-> **Capture method matters.** This corpus was **transcribed** from portal text rather
-> than crawled, because the portal was not reachable from the machine that built it.
-> The content is LOOP's; the transcription is not machine-verified. Every file records
-> this in a `capture:` header, and the skill is instructed to flag it when an exact
-> value is about to move real money.
+---
+
+## 💰 Six things that cost real money
+
+These are the traps in LOOP's API. Your assistant now knows all of them.
+
+<table>
+<tr valign="top"><td width="30">🚨</td><td>
+
+**HTTP 200 does not mean success.**
+The gateway returns `200` for failures too. `if (response.ok)` will record failed
+payments as successful. Branch on **`statusCode` inside the body**.
+
+</td></tr>
+<tr valign="top"><td>💸</td><td>
+
+**Retrying wrong pays twice.**
+On a timeout, retry with the **same** `txnReference`. A new one can send the money
+again. A "duplicate" rejection is good news — it means the first one worked.
+
+</td></tr>
+<tr valign="top"><td>🔑</td><td>
+
+**It says "RSA signing guide". It is not RSA.**
+Every page repeats that line. The real scheme is **HMAC-SHA256** with a shared secret.
+Go hunting for a key pair and you'll lose an afternoon.
+
+</td></tr>
+<tr valign="top"><td>🔁</td><td>
+
+**Transaction Inquiry retries backwards.**
+Every payment endpoint says *reuse* your reference on retry. Inquiry needs a **fresh**
+one on every poll. Get it backwards and every check after the first fails.
+
+</td></tr>
+<tr valign="top"><td>⏱️</td><td>
+
+**Token lifetime is documented as both 900 and 3600 seconds.**
+Two different pages, two different numbers. Read `expires_in` from the live response.
+
+</td></tr>
+<tr valign="top"><td>📍</td><td>
+
+**Signing fields go *inside* `requestParameters`.**
+Not at the top level. This is a documented cause of a `400` with an unhelpful message.
+
+</td></tr>
+</table>
+
+**[→ All 15 documentation conflicts](skills/loop-api/references/doc-conflicts.md)**
+
+---
+
+## 📚 What's in the box
+
+<div align="center">
+
+```mermaid
+flowchart LR
+    A["📖 LOOP<br/>dev portal"] --> B["🔧 crawler +<br/>converter"]
+    B --> C["📁 references/<br/>15 files"]
+    C --> D["🧠 SKILL.md<br/>the workflow"]
+    C --> E["🔌 MCP server<br/>3 tools"]
+    D --> F["Claude · Codex<br/>Cursor · Windsurf"]
+    E --> F
+    style A fill:#0969da,color:#fff
+    style C fill:#2ea44f,color:#fff
+    style F fill:#6e40c9,color:#fff
+```
+
+</div>
+
+**11 documentation pages**, plus four files that don't exist in LOOP's docs at all —
+they're the reason this beats reading the portal yourself:
+
+| 📄 File | What it gives you |
+| :--- | :--- |
+| 🧭 **[`conventions.md`](skills/loop-api/references/conventions.md)** | The rules that stop you double-paying: the `statusCode` bands, the envelope, the retry logic. **Read this first.** |
+| 🔐 **[`signing.md`](skills/loop-api/references/signing.md)** | The HMAC scheme all 9 endpoints share — with LOOP's 4 test vectors, **all recomputed and verified**. Check your code against these before touching sandbox. |
+| ⚠️ **[`doc-conflicts.md`](skills/loop-api/references/doc-conflicts.md)** | 15 places LOOP's docs disagree with themselves. Check here before assuming your code is wrong. |
+| 🕳️ **[`coverage.md`](skills/loop-api/references/coverage.md)** | What's missing, so the assistant says *"not captured"* instead of *"doesn't exist"*. |
+
+### The 9 endpoints, and when to use each
+
+**Getting paid** 📥
+
+| You want to… | Use |
+| :--- | :--- |
+| Ask a customer to pay you | [LOOP Prompt](skills/loop-api/references/loop-prompt.md) — pushes to the LOOP app |
+
+**Paying out** 📤 — pick by what the destination *is*:
+
+| Destination | Use |
+| :--- | :--- |
+| 📱 Someone's LOOP wallet | [Send Money — LOOP](skills/loop-api/references/send-money-loop.md) |
+| 📲 Someone's M-Pesa | [Send Money — M-Pesa](skills/loop-api/references/send-money-mpesa.md) |
+| 🏦 Someone's bank account | [Send Money — PesaLink](skills/loop-api/references/send-money-pesalink.md) |
+| 🏪 A LOOP merchant till | [Pay to LOOP Till](skills/loop-api/references/pay-to-loop-till.md) |
+| 🛒 An M-Pesa buy-goods till | [Pay to M-Pesa Till](skills/loop-api/references/pay-to-mpesa-till.md) |
+| 🧾 An M-Pesa paybill | [Pay to M-Pesa Paybill](skills/loop-api/references/pay-to-mpesa-paybill.md) |
+
+**Checking what happened** 🔍
+
+| You want to… | Use |
+| :--- | :--- |
+| Find out if a payment went through | [Transaction Status Inquiry](skills/loop-api/references/transaction-status-inquiry.md) |
+
+---
+
+## 🧰 Works with your tools
+
+| Tool | Install | What it writes |
+| :--- | :--- | :--- |
+| 🟠 **Claude Code** | `--harness claude` | `.claude/skills/loop-api` |
+| ⚫ **Codex** | `--harness codex` | `AGENTS.md` (adds to yours, keeps your text) |
+| 🔵 **Cursor** | `--harness cursor` | `.cursor/rules/loop-api.mdc` |
+| 🟢 **Windsurf** | `--harness windsurf` | `.windsurf/rules/loop-api.md` |
+| 🟣 **Anything MCP** | `--harness mcp` | Prints config to paste |
+
+One source of truth, five native formats. Re-running is safe — it won't duplicate or
+overwrite anything you wrote.
+
+---
+
+## 🇰🇪 New to payment APIs? Start here
+
+No shame in this — the vocabulary is half the battle.
+
+| Word | What it means |
+| :--- | :--- |
+| **Till** | The number customers pay when they "buy goods". Yours identifies your business. |
+| **Paybill** | Like a till, but the payer also types an account number (your electricity meter, an invoice). |
+| **PesaLink** | The rail that moves money **between Kenyan banks**, using a phone number. |
+| **Sandbox** | A practice environment. Same behaviour, **fake money**. Always start here. |
+| **Endpoint** | One specific web address you send a request to, for one specific job. |
+| **Token** | A short-lived pass you get before calling the API. Expires in minutes. |
+| **Idempotency** | Making sure that sending the same request twice doesn't pay twice. LOOP does this with `txnReference`. |
+| **Callback / webhook** | LOOP calling *your* server to tell you something finished. Only LOOP Prompt uses one. |
+| **Nonce** | A random one-time value proving a request is fresh, not a replay. Never reuse one. |
+
+> [!TIP]
+> **Always build in sandbox first.** Sandbox behaves like production but moves no real
+> money. In production, payouts are **not reversible** — there is no undo.
+
+---
+
+## 🔄 Keeping the docs current
+
+> [!NOTE]
+> **How this copy was captured.** The build machine couldn't reach
+> `sandbox.loop.co.ke`, so the maintainer supplied the page text and it was
+> **transcribed by hand**. The content is LOOP's, but it hasn't been machine-checked
+> against the live pages — a typo is possible in a way it wouldn't be for a crawl.
 >
-> Re-run the crawler from a machine that can reach the portal to replace it with a
-> machine-verified corpus and pick up the two missing pages:
->
-> ```bash
-> ./tools/setup.sh     # or: ./tools/crawl_loop.sh && python tools/ingest_docs.py --input-dir .cache/loop-docs/pages
-> ```
+> Every file records this in a `capture:` header, and the skill is told to flag it when
+> an exact value is about to move real money. The signing scheme is the exception: all
+> four of LOOP's published test vectors were recomputed and match exactly.
 
-### What `setup.sh` does
+To replace it with a machine-verified copy, from any machine that can reach the portal:
 
-It picks the best available capture route and falls back automatically:
+```bash
+./tools/setup.sh
+```
 
-| Route | When it's used | Why it's ranked here |
-| --- | --- | --- |
-| OpenAPI / Swagger spec | if the portal exposes one | Unambiguous about methods, required params, and response shapes |
-| `wget` mirror | normal server-rendered docs | Fast, offline-convertible, no browser needed |
-| Headless Chromium | if the portal renders client-side | The only thing that works on a JavaScript app |
+That finds LOOP's Swagger file if one exists (better than any scrape), falls back to a
+`wget` mirror, and switches to a headless browser if the portal renders client-side. It
+also picks up the two pages this copy is missing.
 
-The crawl is fenced to `/devportal/docs/loop-api`, harvests routes from **JavaScript
-bundles as well as HTML** (docs portals often define navigation in JS where no
-`<a href>` exists), and respects `robots.txt`.
+A change in `references/` is a change in LOOP's API. Read those diffs carefully.
 
-The check that matters most is the empty-shell detector: a `wget` crawl of a
-single-page app prints "saved" for every page while capturing nothing but empty
-`<div id="root">` shells — it *looks* like it worked. The detector is structural
-rather than length-based: a page counts as a shell only when it is both short **and**
-contains no prose elements at all. Loop's portal publishes "documentation coming soon"
-stubs, and a word-count threshold would fail those and send you to the browser path
-for nothing.
+<details>
+<summary><b>Using the crawler on a different docs site</b></summary>
 
-To refresh later, re-run `./tools/setup.sh` and review the diff. A diff in
-`references/` is a change in Loop's API surface.
-
-### Using the crawler on another docs site
-
-Nothing in the capture pipeline is Loop-specific beyond its defaults, so the same
-tooling will snapshot any documentation portal:
+Nothing in the pipeline is LOOP-specific beyond its defaults:
 
 ```bash
 BASE=https://docs.example.com \
@@ -117,98 +307,51 @@ START_PAGE=/api/introduction \
 python tools/ingest_docs.py --input-dir .cache/example-docs/pages --out my-references
 ```
 
-`DOCS_PATH` is the fence — the crawl will not leave it, which is what keeps you out of
-the site's login flow and the rest of its domain.
+`DOCS_PATH` is the fence — the crawl won't leave it, which keeps you out of the site's
+login flow.
 
-Then just ask. The skill triggers on Loop, NCBA Loop, the devportal, and on payment /
-payout / balance / transaction questions even when you don't name an endpoint.
+</details>
 
-## Supported harnesses
+---
 
-| Harness | Install | Mechanism |
-| --- | --- | --- |
-| Claude Code | plugin (below) or `--harness claude` | `.claude/skills/loop-api/` |
-| Codex | `--harness codex` | `AGENTS.md` section |
-| Cursor | `--harness cursor` | `.cursor/rules/loop-api.mdc` |
-| Windsurf | `--harness windsurf` | `.windsurf/rules/loop-api.md` |
-| Gemini CLI | `--harness gemini` | `GEMINI.md` section |
-| OpenCode | `--harness opencode` | `AGENTS.md` section |
-| **Anything else** | `--harness mcp` | MCP server over stdio |
+## 🤝 Contributing
 
-`--harness all` does the lot. Installs are symlinks by default, so `git pull` updates
-every harness at once; pass `--copy` for a frozen snapshot or on Windows.
+Found something wrong? A doc conflict resolved by LOOP support? A page we're missing?
+**Please open an issue.** Especially valuable: an answer from `apisupport@loop.co.ke`
+settling one of the 15 conflicts.
 
-**Claude Code plugin** — the lowest-friction path, installs the skill and the MCP
-server together:
-
-```
-/plugin marketplace add imodoiepale/unleashed-loop.dev-skill
-/plugin install loop-api
-```
-
-You still need to run `./tools/setup.sh` once to build the corpus.
-
-For harnesses with no skill or rules mechanism, the MCP server exposes the same corpus
-as three tools — `loop_docs_index`, `loop_docs_search`, `loop_docs_get` — with no
-dependencies beyond the Python standard library:
+One rule: [**don't write API facts from memory**](CONTRIBUTING.md). Every claim must
+trace to a page you actually read. That rule is the only reason this is worth trusting.
 
 ```bash
-claude mcp add loop-docs -- python /path/to/mcp/loop_docs_server.py
+pip install -r tools/requirements.txt pytest
+python -m pytest tests/ -q                              # 24 tests
+python skills/loop-api/scripts/validate_skill.py        # provenance check
 ```
 
-## What the skill actually does
+---
 
-Three workflows, tuned to what developers get stuck on:
+## 📜 Licence & honesty
 
-- **"Is this possible?"** — translates the goal into banking terms, searches the
-  references, then answers *supported* / *supported with caveats* / *not documented*.
-  It surfaces onboarding and entitlement blockers early, because in banking those are
-  usually the real answer rather than anything to do with code.
-- **Building an integration** — auth working first, sandbox confirmed, smallest
-  read-only call proven, and only then the feature. Failure paths are treated as part
-  of the feature, not an afterthought.
-- **Debugging** — an ordered checklist that starts with the real status code and
-  environment mismatches, which is where the cause usually is.
+**MIT** — free for anyone, for anything. See [LICENSE](LICENSE).
 
-## Credential safety
+This is a **community project**. It is not published, reviewed, or endorsed by LOOP or
+NCBA. The references are a snapshot of public documentation, not a contract. When
+correctness genuinely matters — settlement, fees, limits, compliance — **confirm with
+LOOP directly** at `apisupport@loop.co.ke`.
 
-This is a banking API, so the skill carries non-negotiable rules: never write a secret
-into source or a message, always default examples to sandbox, and **never execute a
-money-moving call on its own initiative** — it drafts the request and hands it to you.
-Full policy in [SECURITY.md](SECURITY.md); CI runs a secret scan on every push.
+<br>
 
-## Layout
+<div align="center">
 
-```
-skills/loop-api/
-  SKILL.md            workflow + navigation (no API facts, by design)
-  references/         GENERATED from Loop's docs — every file stamped with source + date
-  scripts/            search_docs.py, validate_skill.py
-tools/
-  setup.sh            one command: crawl → convert → validate
-  crawl_loop.sh       namespace-fenced wget snapshot + JS route harvesting
-  ingest_docs.py      compiler → references/  (HTTP, Chromium, OpenAPI, or mirror)
-  install.py          one source of truth → every harness's native format
-mcp/
-  loop_docs_server.py stdio MCP server over the same corpus (stdlib only)
-tests/                pytest suite over a synthetic docs mirror
-evals/                trigger and task test cases
-```
+### 🛠️ Built &amp; maintained by **Epale**
 
-## Keeping it current
+#### Powered by **Robyspace AI**
 
-Re-run `python tools/ingest_docs.py` and review the diff — a diff in `references/` is a
-change in Loop's API surface. Every reference file records when it was fetched, and the
-skill tells the agent to trust the live API over a stale snapshot.
+<sub>Made in Kenya 🇰🇪 · for developers building on LOOP</sub>
 
-## Contributing
+<br>
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). One rule above all: **don't hand-write API
-facts.** If a page converts badly, fix the converter, not its output.
+⭐ **If this saved you an afternoon, star the repo so the next developer finds it.**
 
-## Disclaimer
-
-Unofficial and community-maintained. Not published, endorsed, or supported by NCBA or
-Loop. The references are a snapshot of public documentation, not a contract — confirm
-settlement behaviour, limits, fees, and compliance obligations with Loop directly.
-Licensed under the [MIT Licence](LICENSE).
+</div>
