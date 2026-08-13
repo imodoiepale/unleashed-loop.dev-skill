@@ -57,6 +57,22 @@ Check both themes. If one disappears, add a light variant and swap on theme:
 </picture>
 ```
 
+## Icons
+
+`linkedin.svg` is the LinkedIn glyph from **[Simple Icons](https://simpleicons.org)**,
+which releases its icon set under **CC0 1.0** (public domain). It is committed here and
+referenced by relative path rather than hot-linked from a CDN — GitHub's image proxy
+rasterises externally-hosted SVGs (which looked broken), whereas a self-hosted SVG
+renders as crisp vector.
+
+Note: inline `<svg>` markup does **not** work in a GitHub README — the Markdown
+sanitiser strips `<svg>` tags. Committing the file and referencing it with `<img>` is
+the way to use an SVG icon here.
+
+To add another brand icon, download its SVG from Simple Icons into this folder and
+reference it the same way. The LinkedIn wordmark and logo remain trademarks of LinkedIn
+Corporation; the icon is used nominatively, to link to profiles.
+
 ## Trademark
 
 LOOP and NCBA marks belong to their owners. This project is unofficial — the README
